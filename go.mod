@@ -1,4 +1,4 @@
-module github.com/benpate/mongodb
+module github.com/benpate/data-mongo
 
 go 1.16
 
