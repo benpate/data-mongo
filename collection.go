@@ -23,9 +23,7 @@ func (c Collection) List(criteria exp.Expression, options ...option.Option) (dat
 
 	criteriaBSON := ExpressionToBSON(criteria)
 
-	// TODO: translate options into mongodb options...
-
-	cursor, err := c.collection.Find(c.context, criteriaBSON)
+	cursor, err := c.collection.Find(c.context, criteriaBSON, convertOptions(options...))
 
 	if err != nil {
 		return NewIterator(c.context, cursor), derp.New(derp.CodeInternalError, "mongodb.List", "Error Listing Objects", err.Error(), criteria, criteriaBSON, options)
@@ -105,6 +103,16 @@ func (c Collection) Delete(object data.Object, note string) error {
 	// Use virtual delete to mark this object as deleted.
 	object.SetDeleted(note)
 	return c.Save(object, note)
+}
+
+// HardDelete physically removes an object from the database.
+func (c Collection) HardDelete(object data.Object) error {
+
+	filter := bson.M{"_id": object.ID()}
+
+	_, err := c.collection.DeleteOne(c.context, filter)
+
+	return derp.Wrap(err, "mondodb.HardDelete", "Error performing hard delete", object)
 }
 
 // Mongo returns the underlying mongodb collection for libraries that need to bypass this abstraction.
