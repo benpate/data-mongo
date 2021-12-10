@@ -1,11 +1,10 @@
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/aws/aws-sdk-go v1.34.28 h1:sscPpn/Ns3i0F4HPEWAVcwdIRaZZCuL7llJ2/60yPIk=
 github.com/aws/aws-sdk-go v1.34.28/go.mod h1:H7NKnBqNVzoTJpGfLrQkkD+ytBA93eiDYi/+8rV9s48=
-github.com/benpate/data v0.11.0 h1:84NN8LKgaAnYk/DjJv8rR4plPSoLbTylNZRcRRz0pRg=
-github.com/benpate/data v0.11.0/go.mod h1:uta+dIMMsVC6DJiN5AJPjUX38qMkv5oadogIIzccuCI=
+github.com/benpate/data v0.11.1 h1:Y2M4t+mljwmK7nHRzw8OPQcFEFPYX//WrgmyAAEKpFs=
+github.com/benpate/data v0.11.1/go.mod h1:ruobRFHU15zUrdWxBB4XO+qitZxPO15cVRo5WVjik/c=
 github.com/benpate/derp v0.21.0 h1:Tb0PqDuZ1ek+i+Uz+HqT+ZOFxSwhVQivay3aG3NPiVs=
 github.com/benpate/derp v0.21.0/go.mod h1:ENjMpkMmxn9gAulMAggElVcD2kNrsbjFhoZK8fUlCxY=
-github.com/benpate/exp v0.0.1/go.mod h1:zcZXwwo5KU1tjHy+E3XmHqt0O4hi4CBVCXvP+S4BZZw=
 github.com/benpate/exp v0.0.2 h1:apzPKyco3jkrt04vCFat35n78z7Hr+/A0AAWW3YE4B8=
 github.com/benpate/exp v0.0.2/go.mod h1:H1xq7SSNHUDA6RrCVGeh7hTK4Ts+5WA/zeFze1Jv3VI=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

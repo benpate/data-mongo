@@ -26,7 +26,6 @@ func convertOptions(options ...dataOption.Option) *mongoOptions.FindOptions {
 		case dataOption.SortConfig:
 			result.SetSort(bson.D{{o.FieldName, sortDirection(o.Direction)}})
 		}
-
 	}
 
 	return result

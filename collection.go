@@ -22,8 +22,8 @@ type Collection struct {
 func (c Collection) List(criteria exp.Expression, options ...option.Option) (data.Iterator, error) {
 
 	criteriaBSON := ExpressionToBSON(criteria)
-
-	cursor, err := c.collection.Find(c.context, criteriaBSON, convertOptions(options...))
+	optionsBSON := convertOptions(options...)
+	cursor, err := c.collection.Find(c.context, criteriaBSON, optionsBSON)
 
 	if err != nil {
 		return NewIterator(c.context, cursor), derp.New(derp.CodeInternalError, "mongodb.List", "Error Listing Objects", err.Error(), criteria, criteriaBSON, options)
