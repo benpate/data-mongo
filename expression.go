@@ -59,9 +59,9 @@ func operatorBSON(operator string) string {
 	case exp.OperatorLessThan:
 		return "$lt"
 	case exp.OperatorLessOrEqual:
-		return "$le"
+		return "$lte"
 	case exp.OperatorGreaterOrEqual:
-		return "$ge"
+		return "$gte"
 	case exp.OperatorGreaterThan:
 		return "$gt"
 	default:
