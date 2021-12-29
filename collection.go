@@ -108,9 +108,15 @@ func (c Collection) Delete(object data.Object, note string) error {
 // HardDelete physically removes an object from the database.
 func (c Collection) HardDelete(object data.Object) error {
 
-	filter := bson.M{"_id": object.ID()}
+	objectID, err := primitive.ObjectIDFromHex(object.ID())
 
-	_, err := c.collection.DeleteOne(c.context, filter)
+	if err != nil {
+		return derp.New(derp.CodeInternalError, "mongodb.HardDelete", "Error generating objectID", err, object)
+	}
+
+	filter := bson.M{"_id": objectID}
+
+	_, err = c.collection.DeleteOne(c.context, filter)
 
 	return derp.Wrap(err, "mondodb.HardDelete", "Error performing hard delete", object)
 }
