@@ -3,14 +3,18 @@ module github.com/benpate/data-mongo
 go 1.17
 
 require (
-	github.com/benpate/data v0.11.1
-	github.com/benpate/derp v0.22.0
-	github.com/benpate/exp v0.0.2
+	github.com/benpate/data v0.12.0
+	github.com/benpate/derp v0.22.2
+	github.com/benpate/exp v0.1.0
 	github.com/stretchr/testify v1.7.0
 	go.mongodb.org/mongo-driver v1.8.1
 )
 
 require (
+	github.com/benpate/compare v0.1.0 // indirect
+	github.com/benpate/convert v0.11.1 // indirect
+	github.com/benpate/null v0.6.1 // indirect
+	github.com/benpate/path v0.5.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/go-stack/stack v1.8.0 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
