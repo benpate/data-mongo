@@ -1,13 +1,8 @@
 package mongodb
 
 import (
-	"context"
-	"testing"
-
 	"github.com/benpate/data/journal"
-	"github.com/benpate/exp"
 	"github.com/benpate/path"
-	"github.com/stretchr/testify/require"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -47,25 +42,4 @@ func (ts *testStream) GetPath(p path.Path) (interface{}, error) {
 
 func (ts *testStream) SetPath(p path.Path, value interface{}) error {
 	return nil
-}
-
-func TestIterator(t *testing.T) {
-
-	var result testStream
-
-	server, err := New("mongodb://127.0.0.1:27017/", "whisper")
-	require.Nil(t, err)
-
-	session, err := server.Session(context.TODO())
-	require.Nil(t, err)
-
-	collection := session.Collection("Stream")
-	require.Nil(t, err)
-
-	it, err := collection.List(exp.Equal("templateId", "comment"))
-	require.Nil(t, err)
-
-	for it.Next(&result) {
-		t.Log(result)
-	}
 }
