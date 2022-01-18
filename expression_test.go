@@ -27,10 +27,10 @@ func TestExpression(t *testing.T) {
 		pred := exp.GreaterThan("age", 42)
 		assert.Equal(t, toJSON(ExpressionToBSON(pred)), `{"age":{"$gt":42}}`)
 
-		pred2 := pred.And("createDate", exp.OperatorEqual, 10)
+		pred2 := pred.AndEqual("createDate", 10)
 		assert.Equal(t, toJSON(ExpressionToBSON(pred2)), `{"$and":[{"age":{"$gt":42}},{"createDate":{"$eq":10}}]}`)
 
-		pred3 := pred2.And("createDate", exp.OperatorLessThan, 20)
+		pred3 := pred2.AndLessThan("createDate", 20)
 		assert.Equal(t, toJSON(ExpressionToBSON(pred3)), `{"$and":[{"age":{"$gt":42}},{"createDate":{"$eq":10}},{"createDate":{"$lt":20}}]}`)
 	}
 

@@ -44,7 +44,7 @@ func TestIterator(t *testing.T) {
 
 	var result testStream
 
-	server, err := New("mongodb://127.0.0.1:27017/", "ghost")
+	server, err := New("mongodb://127.0.0.1:27017/", "whisper")
 	require.Nil(t, err)
 
 	session, err := server.Session(context.TODO())
