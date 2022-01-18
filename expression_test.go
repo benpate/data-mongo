@@ -30,28 +30,28 @@ func TestExpression(t *testing.T) {
 		pred2 := pred.AndEqual("createDate", 10)
 		assert.Equal(t, toJSON(ExpressionToBSON(pred2)), `{"$and":[{"age":{"$gt":42}},{"createDate":{"$eq":10}}]}`)
 
-		pred3 := pred2.AndLessThan("createDate", 20)
+		pred3 := pred2.And(exp.LessThan("createDate", 20))
 		assert.Equal(t, toJSON(ExpressionToBSON(pred3)), `{"$and":[{"age":{"$gt":42}},{"createDate":{"$eq":10}},{"createDate":{"$lt":20}}]}`)
 	}
 
 	{
 		pred4 := exp.Or(
-			exp.New("name", "=", "John Connor").And("favorite_color", "=", "blue"),
-			exp.New("name", "=", "Sara Connor").And("favorite_color", "=", "green"),
+			exp.New("name", "=", "John Connor").AndEqual("favorite_color", "blue"),
+			exp.New("name", "=", "Sara Connor").AndEqual("favorite_color", "green"),
 		)
 
 		assert.Equal(t, toJSON(ExpressionToBSON(pred4)), `{"$or":[{"$and":[{"name":{"$eq":"John Connor"}},{"favorite_color":{"$eq":"blue"}}]},{"$and":[{"name":{"$eq":"Sara Connor"}},{"favorite_color":{"$eq":"green"}}]}]}`)
 	}
 
 	{
-		pred5 := exp.New("name", "=", "John Connor").Or("favorite_color", "=", "blue")
+		pred5 := exp.New("name", "=", "John Connor").Or(exp.New("favorite_color", "=", "blue"))
 		assert.Equal(t, toJSON(ExpressionToBSON(pred5)), `{"$or":[{"name":{"$eq":"John Connor"}},{"favorite_color":{"$eq":"blue"}}]}`)
 	}
 
 	{
 		pred6 := exp.And(
-			exp.New("name", "=", "John Connor").Or("favorite_color", "=", "blue"),
-			exp.New("name", "=", "Sara Connor").Or("favorite_color", "=", "green"),
+			exp.New("name", "=", "John Connor").Or(exp.New("favorite_color", "=", "blue")),
+			exp.New("name", "=", "Sara Connor").Or(exp.New("favorite_color", "=", "green")),
 		)
 
 		assert.Equal(t, toJSON(ExpressionToBSON(pred6)), `{"$and":[{"$or":[{"name":{"$eq":"John Connor"}},{"favorite_color":{"$eq":"blue"}}]},{"$or":[{"name":{"$eq":"Sara Connor"}},{"favorite_color":{"$eq":"green"}}]}]}`)
