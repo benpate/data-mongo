@@ -6,6 +6,7 @@ import (
 
 	"github.com/benpate/data/journal"
 	"github.com/benpate/exp"
+	"github.com/benpate/path"
 	"github.com/stretchr/testify/require"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -38,6 +39,14 @@ type testStream struct {
 
 func (ts *testStream) ID() string {
 	return ts.StreamID.Hex()
+}
+
+func (ts *testStream) GetPath(p path.Path) (interface{}, error) {
+	return nil, nil
+}
+
+func (ts *testStream) SetPath(p path.Path, value interface{}) error {
+	return nil
 }
 
 func TestIterator(t *testing.T) {
