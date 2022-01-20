@@ -2,7 +2,6 @@ package mongodb
 
 import (
 	"github.com/benpate/data/journal"
-	"github.com/benpate/path"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -36,10 +35,10 @@ func (ts *testStream) ID() string {
 	return ts.StreamID.Hex()
 }
 
-func (ts *testStream) GetPath(p path.Path) (interface{}, error) {
-	return nil, nil
+func (ts *testStream) GetPath(path string) (interface{}, bool) {
+	return nil, false
 }
 
-func (ts *testStream) SetPath(p path.Path, value interface{}) error {
+func (ts *testStream) SetPath(path string, value interface{}) error {
 	return nil
 }
