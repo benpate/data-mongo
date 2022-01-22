@@ -31,14 +31,19 @@ type testStream struct {
 	journal.Journal `json:"journal" bson:"journal"`
 }
 
+//lint:ignore U1000 these functions are required for the data.Object interface
+
+// ID implements the data.Object interface
 func (ts *testStream) ID() string {
 	return ts.StreamID.Hex()
 }
 
+// GetPath implements the data.Object interface
 func (ts *testStream) GetPath(path string) (interface{}, bool) {
 	return nil, false
 }
 
+// SetPath implements the data.Object interface
 func (ts *testStream) SetPath(path string, value interface{}) error {
 	return nil
 }
