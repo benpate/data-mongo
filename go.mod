@@ -3,7 +3,7 @@ module github.com/benpate/data-mongo
 go 1.17
 
 require (
-	github.com/benpate/data v0.15.2
+	github.com/benpate/data v0.16.0
 	github.com/benpate/derp v0.22.2
 	github.com/benpate/exp v0.1.1
 	github.com/stretchr/testify v1.7.1
