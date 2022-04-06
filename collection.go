@@ -26,7 +26,7 @@ func (c Collection) List(criteria exp.Expression, options ...option.Option) (dat
 	cursor, err := c.collection.Find(c.context, criteriaBSON, optionsBSON)
 
 	if err != nil {
-		return NewIterator(c.context, cursor), derp.New(derp.CodeInternalError, "mongodb.List", "Error Listing Objects", err.Error(), criteria, criteriaBSON, options)
+		return NewIterator(c.context, cursor), derp.NewInternalError("mongodb.List", "Error Listing Objects", err.Error(), criteria, criteriaBSON, options)
 	}
 
 	iterator := NewIterator(c.context, cursor)
@@ -65,7 +65,7 @@ func (c Collection) Save(object data.Object, note string) error {
 		object.SetCreated(note)
 
 		if _, err := c.collection.InsertOne(c.context, object); err != nil {
-			return derp.New(derp.CodeInternalError, "mongodb.Save", "Error inserting object", err.Error(), object)
+			return derp.NewInternalError("mongodb.Save", "Error inserting object", err.Error(), object)
 		}
 
 		return nil
@@ -76,7 +76,7 @@ func (c Collection) Save(object data.Object, note string) error {
 	objectID, err := primitive.ObjectIDFromHex(object.ID())
 
 	if err != nil {
-		return derp.New(derp.CodeInternalError, "mongodb.Save", "Error generating objectID", err, object)
+		return derp.NewInternalError("mongodb.Save", "Error generating objectID", err, object)
 	}
 
 	filter := bson.M{
@@ -87,7 +87,7 @@ func (c Collection) Save(object data.Object, note string) error {
 	update := bson.M{"$set": object}
 
 	if _, err := c.collection.UpdateOne(c.context, filter, update); err != nil {
-		return derp.New(derp.CodeInternalError, "mongodb.Save", "Error saving object", err.Error(), filter, update)
+		return derp.NewInternalError("mongodb.Save", "Error saving object", err.Error(), filter, update)
 	}
 
 	return nil
@@ -97,7 +97,7 @@ func (c Collection) Save(object data.Object, note string) error {
 func (c Collection) Delete(object data.Object, note string) error {
 
 	if object.IsNew() {
-		return derp.New(derp.CodeBadRequestError, "mongo.Delete", "Cannot delete a new object", object, note)
+		return derp.NewBadRequestError("mongo.Delete", "Cannot delete a new object", object, note)
 	}
 
 	// Use virtual delete to mark this object as deleted.
@@ -110,9 +110,7 @@ func (c Collection) HardDelete(criteria exp.Expression) error {
 
 	criteriaBSON := ExpressionToBSON(criteria)
 
-	_, err := c.collection.DeleteOne(c.context, criteriaBSON)
-
-	if err != nil {
+	if _, err := c.collection.DeleteMany(c.context, criteriaBSON); err != nil {
 		return derp.Wrap(err, "mondodb.HardDelete", "Error performing hard delete", criteria)
 	}
 
