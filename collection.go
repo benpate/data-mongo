@@ -18,7 +18,27 @@ type Collection struct {
 	context    context.Context
 }
 
-// List retrieves a group of objects from the database
+// Query retrieves a group of objects from the database and populates a target interface
+func (c Collection) Query(target interface{}, criteria exp.Expression, options ...option.Option) error {
+
+	const location = "data-mongo.collection.Query"
+
+	criteriaBSON := ExpressionToBSON(criteria)
+	optionsBSON := convertOptions(options...)
+	cursor, err := c.collection.Find(c.context, criteriaBSON, optionsBSON)
+
+	if err != nil {
+		return derp.NewInternalError(location, "Error Listing Objects", err.Error(), criteriaBSON, options)
+	}
+
+	if err := cursor.All(c.context, target); err != nil {
+		return derp.Wrap(err, location, "Error unmarshalling database objects", target, criteriaBSON, options)
+	}
+
+	return nil
+}
+
+// List retrieves a group of objects from the database as an iterator
 func (c Collection) List(criteria exp.Expression, options ...option.Option) (data.Iterator, error) {
 
 	criteriaBSON := ExpressionToBSON(criteria)

@@ -66,6 +66,8 @@ func operatorBSON(operator string) string {
 		return "$gt"
 	case exp.OperatorIn:
 		return "$in"
+	case exp.OperatorNotIn:
+		return "$nin"
 	default:
 		return "$eq"
 	}

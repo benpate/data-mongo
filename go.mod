@@ -1,13 +1,13 @@
 module github.com/benpate/data-mongo
 
-go 1.17
+go 1.18
 
 require (
-	github.com/benpate/data v0.16.0
+	github.com/benpate/data v0.16.2
 	github.com/benpate/derp v0.22.2
-	github.com/benpate/exp v0.1.1
+	github.com/benpate/exp v0.1.4
 	github.com/stretchr/testify v1.7.1
-	go.mongodb.org/mongo-driver v1.9.0
+	go.mongodb.org/mongo-driver v1.9.1
 )
 
 require (

@@ -2,7 +2,7 @@ package mongodb
 
 import (
 	dataOption "github.com/benpate/data/option"
-	"go.mongodb.org/mongo-driver/bson"
+	bson "go.mongodb.org/mongo-driver/bson"
 	mongoOptions "go.mongodb.org/mongo-driver/mongo/options"
 )
 
