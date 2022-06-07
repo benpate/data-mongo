@@ -6,7 +6,7 @@ require (
 	github.com/benpate/data v0.16.2
 	github.com/benpate/derp v0.22.2
 	github.com/benpate/exp v0.1.4
-	github.com/stretchr/testify v1.7.1
+	github.com/stretchr/testify v1.7.2
 	go.mongodb.org/mongo-driver v1.9.1
 )
 
@@ -24,5 +24,5 @@ require (
 	golang.org/x/crypto v0.0.0-20220112180741-5e0467b6c7ce // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
 	golang.org/x/text v0.3.7 // indirect
-	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
