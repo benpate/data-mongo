@@ -4,8 +4,8 @@ go 1.18
 
 require (
 	github.com/benpate/data v0.17.0
-	github.com/benpate/derp v0.22.2
-	github.com/benpate/exp v0.2.0
+	github.com/benpate/derp v0.23.0
+	github.com/benpate/exp v0.3.0
 	github.com/stretchr/testify v1.7.4
 	go.mongodb.org/mongo-driver v1.9.1
 )
@@ -17,7 +17,6 @@ require (
 	github.com/klauspost/compress v1.15.6 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/rogpeppe/go-internal v1.8.1 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.1.1 // indirect
 	github.com/xdg-go/stringprep v1.0.3 // indirect
