@@ -3,7 +3,6 @@ package mongodb
 import (
 	"context"
 
-	"github.com/benpate/data"
 	"github.com/benpate/derp"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -30,7 +29,7 @@ func (iterator Iterator) Count() int {
 }
 
 // Next populates the next value from the wrapped Cursor, or returns FALSE
-func (iterator Iterator) Next(output data.Object) bool {
+func (iterator Iterator) Next(output any) bool {
 
 	if !iterator.Cursor.TryNext(iterator.Context) {
 		return false
