@@ -51,3 +51,7 @@ func (iterator Iterator) Close() error {
 
 	return nil
 }
+
+func (iterator Iterator) Error() error {
+	return iterator.Cursor.Err()
+}
