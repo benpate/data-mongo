@@ -28,9 +28,11 @@ func convertOptions(options ...dataOption.Option) *mongoOptions.FindOptions {
 
 		case dataOption.FieldsConfig:
 			fields := opt.Fields()
-			projection := make(bson.D, len(fields))
+			projection := make(bson.D, 0, len(fields))
 			for _, field := range fields {
-				projection = append(projection, bson.E{Key: field, Value: 1})
+				if field != "" {
+					projection = append(projection, bson.E{Key: field, Value: 1})
+				}
 			}
 			result.SetProjection(projection)
 

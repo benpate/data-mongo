@@ -19,7 +19,7 @@ type Collection struct {
 }
 
 // Query retrieves a group of objects from the database and populates a target interface
-func (c Collection) Query(target interface{}, criteria exp.Expression, options ...option.Option) error {
+func (c Collection) Query(target any, criteria exp.Expression, options ...option.Option) error {
 
 	const location = "data-mongo.collection.Query"
 

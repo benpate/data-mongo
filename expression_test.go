@@ -11,7 +11,7 @@ import (
 func TestExpression(t *testing.T) {
 
 	// toJSON converts values into an easy-to-test JSON string
-	toJSON := func(value interface{}) string {
+	toJSON := func(value any) string {
 
 		result, err := json.Marshal(value)
 
