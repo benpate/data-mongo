@@ -1,7 +1,7 @@
-github.com/benpate/data v0.22.0 h1:X1hGsY85j4sBAV1UL6c24sX0TVtRhgWTS2JxuzlZ5o8=
-github.com/benpate/data v0.22.0/go.mod h1:VpaDjJioT5msVdk8Uwu074iANhvDdz2pVS5cDEgNbvc=
-github.com/benpate/derp v0.25.1 h1:1SqCDIdRIjN3SqAZLZteWlWJa7rtpeGwLKEtwFBP1lE=
-github.com/benpate/derp v0.25.1/go.mod h1:Qrtco2SAercNzKqb6WsaXvxn1E+/4DHBaWB+BwehJAo=
+github.com/benpate/data v0.23.0 h1:lbTWQgGfqUY+V8ACF2/4YTmETRSr+SzONiw+ECOdnao=
+github.com/benpate/data v0.23.0/go.mod h1:VpaDjJioT5msVdk8Uwu074iANhvDdz2pVS5cDEgNbvc=
+github.com/benpate/derp v0.27.0 h1:qjKlTC2gv5MtqFgz2vSGWoz2WyMNT6i2ALyIyBJ7s6Q=
+github.com/benpate/derp v0.27.0/go.mod h1:Qrtco2SAercNzKqb6WsaXvxn1E+/4DHBaWB+BwehJAo=
 github.com/benpate/exp v0.6.0 h1:upJ6F8NNLTPPqMwxksn+PvGpWfUJOyDeolp9x0P9eKQ=
 github.com/benpate/exp v0.6.0/go.mod h1:+eTsvQVuAobL6efQ1KMwzQLK5Trm679Oiq+n8IflrFU=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
