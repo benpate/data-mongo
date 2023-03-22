@@ -23,9 +23,7 @@ func NewIterator(context context.Context, cursor *mongo.Cursor) Iterator {
 
 // Count returns the total number of records contained by this iterator
 func (iterator Iterator) Count() int {
-
-	elements, _ := iterator.Cursor.Current.Elements()
-	return len(elements)
+	return iterator.Cursor.RemainingBatchLength()
 }
 
 // Next populates the next value from the wrapped Cursor, or returns FALSE
