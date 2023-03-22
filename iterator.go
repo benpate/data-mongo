@@ -29,7 +29,7 @@ func (iterator Iterator) Count() int {
 // Next populates the next value from the wrapped Cursor, or returns FALSE
 func (iterator Iterator) Next(output any) bool {
 
-	if !iterator.Cursor.TryNext(iterator.Context) {
+	if !iterator.Cursor.Next(iterator.Context) {
 		return false
 	}
 
