@@ -7,7 +7,7 @@ require (
 	github.com/benpate/derp v0.27.1
 	github.com/benpate/exp v0.7.0
 	github.com/stretchr/testify v1.8.2
-	go.mongodb.org/mongo-driver v1.11.4
+	go.mongodb.org/mongo-driver v1.11.5
 )
 
 require (
