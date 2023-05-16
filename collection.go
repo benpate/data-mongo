@@ -104,10 +104,8 @@ func (c Collection) Save(object data.Object, note string) error {
 		"journal.deleteDate": 0,
 	}
 
-	update := bson.M{"$set": object}
-
-	if _, err := c.collection.UpdateOne(c.context, filter, update); err != nil {
-		return derp.NewInternalError("mongodb.Save", "Error saving object", err.Error(), filter, update)
+	if _, err := c.collection.ReplaceOne(c.context, filter, object); err != nil {
+		return derp.NewInternalError("mongodb.Save", "Error replacing object", err.Error(), filter, object)
 	}
 
 	return nil
