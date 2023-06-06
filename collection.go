@@ -99,10 +99,7 @@ func (c Collection) Save(object data.Object, note string) error {
 		return derp.NewInternalError("mongodb.Save", "Error generating objectID", err, object)
 	}
 
-	filter := bson.M{
-		"_id":                objectID,
-		"journal.deleteDate": 0,
-	}
+	filter := bson.M{"_id": objectID}
 
 	if _, err := c.collection.ReplaceOne(c.context, filter, object); err != nil {
 		return derp.NewInternalError("mongodb.Save", "Error replacing object", err.Error(), filter, object)
