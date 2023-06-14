@@ -23,11 +23,11 @@ func New(uri string, database string) (Server, error) {
 	client, err := mongo.NewClient(options.Client().ApplyURI(uri))
 
 	if err != nil {
-		return Server{}, derp.Wrap(err, "data.mongodb.New", "Error creating mongodb client")
+		return Server{}, derp.Wrap(err, "data.mongodb.New", "Error creating mongodb client", uri, database)
 	}
 
 	if err := client.Connect(context.Background()); err != nil {
-		return Server{}, derp.Wrap(err, "data.mongodb.New", "Error connecting to mongodb Server")
+		return Server{}, derp.Wrap(err, "data.mongodb.New", "Error connecting to mongodb Server", uri, database)
 	}
 
 	result := Server{
