@@ -18,6 +18,23 @@ type Collection struct {
 	context    context.Context
 }
 
+func (c Collection) Count(criteria exp.Expression, _ ...option.Option) (int64, error) {
+
+	const location = "data-mongo.collection.Count"
+
+	criteriaBSON := ExpressionToBSON(criteria)
+	count, err := c.collection.CountDocuments(c.context, criteriaBSON)
+
+	// TODO: LOW: Add options to this function
+	// https://pkg.go.dev/go.mongodb.org/mongo-driver/mongo/options#CountOptions
+
+	if err != nil {
+		return 0, derp.NewInternalError(location, "Error counting objects", err.Error(), criteriaBSON)
+	}
+
+	return count, nil
+}
+
 // Query retrieves a group of objects from the database and populates a target interface
 func (c Collection) Query(target any, criteria exp.Expression, options ...option.Option) error {
 
@@ -38,8 +55,8 @@ func (c Collection) Query(target any, criteria exp.Expression, options ...option
 	return nil
 }
 
-// List retrieves a group of objects from the database as an iterator
-func (c Collection) List(criteria exp.Expression, options ...option.Option) (data.Iterator, error) {
+// Iterator retrieves a group of objects from the database as an iterator
+func (c Collection) Iterator(criteria exp.Expression, options ...option.Option) (data.Iterator, error) {
 
 	criteriaBSON := ExpressionToBSON(criteria)
 	optionsBSON := convertOptions(options...)
