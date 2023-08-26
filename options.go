@@ -37,7 +37,7 @@ func convertOptions(options ...dataOption.Option) *mongoOptions.FindOptions {
 			result.SetProjection(projection)
 
 		case dataOption.SortConfig:
-			result.SetSort(bson.D{{opt.FieldName, sortDirection(opt.Direction)}})
+			result.SetSort(bson.D{{Key: opt.FieldName, Value: sortDirection(opt.Direction)}})
 		}
 	}
 
