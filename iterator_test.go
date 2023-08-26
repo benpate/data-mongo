@@ -26,7 +26,7 @@ type testStream struct {
 	OriginURL       string              `json:"originURL"       bson:"originURL,omitempty"` // URL of the original document published by the source server
 	PublishDate     int64               `json:"publishDate"     bson:"publishDate"`         // Unix timestamp of the date/time when this document is/was/will be first available on the domain.
 	UnPublishDate   int64               `json:"unpublishDate"   bson:"unpublishDate"`       // Unix timestemp of the date/time when this document will no longer be available on the domain.
-	Rank            int                 `json:"Rank"            bson:"Rank"`                // Rank allows for a manual sort of streams
+	Rank            int                 `json:"rank"            bson:"rank"`                // Rank allows for a manual sort of streams
 	journal.Journal `json:"journal" bson:"journal"`
 }
 
