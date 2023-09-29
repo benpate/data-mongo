@@ -15,6 +15,14 @@ type Session struct {
 	context  context.Context
 }
 
+// NewSession generates a new Session object from a mongo.Database
+func NewSession(database *mongo.Database) Session {
+	return Session{
+		database: database,
+		context:  context.Background(),
+	}
+}
+
 // Collection returns a reference to an individual database collection.
 func (s Session) Collection(collection string) data.Collection {
 

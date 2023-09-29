@@ -18,6 +18,14 @@ type Collection struct {
 	context    context.Context
 }
 
+// NewCollection creates a new Collection object directly from a mongo.Collection
+func NewCollection(collection *mongo.Collection) Collection {
+	return Collection{
+		collection: collection,
+		context:    context.Background(),
+	}
+}
+
 func (c Collection) Count(criteria exp.Expression, _ ...option.Option) (int64, error) {
 
 	const location = "data-mongo.collection.Count"
