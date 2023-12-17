@@ -86,7 +86,7 @@ func (c Collection) Load(criteria exp.Expression, target data.Object) error {
 
 	if err := c.collection.FindOne(c.context, criteriaBSON).Decode(target); err != nil {
 
-		if err.Error() == "mongo: no documents in result" {
+		if err == mongo.ErrNoDocuments {
 			return derp.NewNotFoundError("mongodb.Load", "Error loading object", err.Error(), criteria, criteriaBSON, target)
 		}
 
