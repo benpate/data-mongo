@@ -20,16 +20,14 @@ type Server struct {
 // cluster, along with the name of the database to be used for all transactions.
 func New(uri string, database string) (Server, error) {
 
-	client, err := mongo.NewClient(options.Client().ApplyURI(uri))
+	// Connect to the server
+	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(uri))
 
 	if err != nil {
-		return Server{}, derp.Wrap(err, "data.mongodb.New", "Error creating mongodb client", uri, database)
+		return Server{}, derp.Wrap(err, "data.mongodb.New", "Error connecting to mongodb server", uri, database)
 	}
 
-	if err := client.Connect(context.Background()); err != nil {
-		return Server{}, derp.Wrap(err, "data.mongodb.New", "Error connecting to mongodb Server", uri, database)
-	}
-
+	// Return a wrapped "data.Server" value
 	result := Server{
 		client:   client,
 		database: client.Database(database),
