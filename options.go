@@ -18,15 +18,15 @@ func convertOptions(options ...dataOption.Option) *mongoOptions.FindOptions {
 
 		switch opt := option.(type) {
 
-		case dataOption.FirstRowConfig:
+		case dataOption.FirstRowOption:
 			result.SetLimit(1)
 
-		case dataOption.MaxRowsConfig:
+		case dataOption.MaxRowsOption:
 			if opt > 0 {
 				result.SetLimit(opt.MaxRows())
 			}
 
-		case dataOption.FieldsConfig:
+		case dataOption.FieldsOption:
 			fields := opt.Fields()
 			projection := make(bson.D, 0, len(fields))
 			for _, field := range fields {
@@ -36,8 +36,22 @@ func convertOptions(options ...dataOption.Option) *mongoOptions.FindOptions {
 			}
 			result.SetProjection(projection)
 
-		case dataOption.SortConfig:
+		case dataOption.SortOption:
 			result.SetSort(bson.D{{Key: opt.FieldName, Value: sortDirection(opt.Direction)}})
+
+		case dataOption.CaseSensitiveOption:
+
+			if opt.CaseSensitive() {
+				result.SetCollation(&mongoOptions.Collation{
+					Locale:   "en",
+					Strength: 3,
+				})
+			} else {
+				result.SetCollation(&mongoOptions.Collation{
+					Locale:   "en",
+					Strength: 2,
+				})
+			}
 		}
 	}
 
