@@ -13,9 +13,21 @@ func ExpressionToBSON(criteria exp.Expression) bson.M {
 
 	case exp.Predicate:
 
-		result := bson.M{}
-		result[c.Field] = operatorBSON(c.Operator, c.Value)
-		return result
+		switch c.Field {
+
+		// Special case for full-text search (ick)
+		case "$fullText":
+			return bson.M{
+				"$text": bson.M{
+					"$search": c.Value,
+				},
+			}
+
+		default:
+			result := bson.M{}
+			result[c.Field] = operatorBSON(c.Operator, c.Value)
+			return result
+		}
 
 	case exp.AndExpression:
 
@@ -76,6 +88,9 @@ func operatorBSON(operator string, value any) bson.M {
 
 	case exp.OperatorNotIn:
 		return bson.M{"$nin": value}
+
+	case exp.OperatorInAll:
+		return bson.M{"$all": value}
 
 	case exp.OperatorBeginsWith:
 		if valueString, ok := value.(string); ok {
