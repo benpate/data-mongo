@@ -18,10 +18,10 @@ type Server struct {
 
 // New returns a fully populated mongodb.Server.  It requires that you provide the URI for the mongodb
 // cluster, along with the name of the database to be used for all transactions.
-func New(uri string, database string) (Server, error) {
+func New(uri string, database string, opt *options.ClientOptions) (Server, error) {
 
 	// Connect to the server
-	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(uri))
+	client, err := mongo.Connect(context.Background(), opt.ApplyURI(uri))
 
 	if err != nil {
 		return Server{}, derp.Wrap(err, "data.mongodb.New", "Error connecting to mongodb server", uri, database)
