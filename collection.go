@@ -37,7 +37,7 @@ func (c Collection) Count(criteria exp.Expression, _ ...option.Option) (int64, e
 	// https://pkg.go.dev/go.mongodb.org/mongo-driver/mongo/options#CountOptions
 
 	if err != nil {
-		return 0, derp.NewInternalError(location, "Error counting objects", err.Error(), criteriaBSON)
+		return 0, derp.InternalError(location, "Error counting objects", err.Error(), criteriaBSON)
 	}
 
 	return count, nil
@@ -53,7 +53,7 @@ func (c Collection) Query(target any, criteria exp.Expression, options ...option
 	cursor, err := c.collection.Find(c.context, criteriaBSON, optionsBSON)
 
 	if err != nil {
-		return derp.NewInternalError(location, "Error Listing Objects", err.Error(), criteriaBSON, options)
+		return derp.InternalError(location, "Error Listing Objects", err.Error(), criteriaBSON, options)
 	}
 
 	if err := cursor.All(c.context, target); err != nil {
@@ -71,7 +71,7 @@ func (c Collection) Iterator(criteria exp.Expression, options ...option.Option) 
 	cursor, err := c.collection.Find(c.context, criteriaBSON, optionsBSON)
 
 	if err != nil {
-		return NewIterator(c.context, cursor), derp.NewInternalError("mongodb.List", "Error Listing Objects", err.Error(), criteria, criteriaBSON, options)
+		return NewIterator(c.context, cursor), derp.InternalError("mongodb.List", "Error Listing Objects", err.Error(), criteria, criteriaBSON, options)
 	}
 
 	iterator := NewIterator(c.context, cursor)
@@ -87,10 +87,10 @@ func (c Collection) Load(criteria exp.Expression, target data.Object) error {
 	if err := c.collection.FindOne(c.context, criteriaBSON).Decode(target); err != nil {
 
 		if err == mongo.ErrNoDocuments {
-			return derp.NewNotFoundError("mongodb.Load", "Error loading object", err.Error(), criteria, criteriaBSON, target)
+			return derp.NotFoundError("mongodb.Load", "Error loading object", err.Error(), criteria, criteriaBSON, target)
 		}
 
-		return derp.NewInternalError("mongodb.Load", "Error loading object", err.Error(), criteria, criteriaBSON, target)
+		return derp.InternalError("mongodb.Load", "Error loading object", err.Error(), criteria, criteriaBSON, target)
 	}
 
 	return nil
@@ -106,7 +106,7 @@ func (c Collection) Save(object data.Object, note string) error {
 		object.SetCreated(note)
 
 		if _, err := c.collection.InsertOne(c.context, object); err != nil {
-			return derp.NewInternalError("mongodb.Save", "Error inserting object", err.Error(), object)
+			return derp.InternalError("mongodb.Save", "Error inserting object", err.Error(), object)
 		}
 
 		return nil
@@ -117,13 +117,13 @@ func (c Collection) Save(object data.Object, note string) error {
 	objectID, err := primitive.ObjectIDFromHex(object.ID())
 
 	if err != nil {
-		return derp.NewInternalError("mongodb.Save", "Error generating objectID", err, object)
+		return derp.InternalError("mongodb.Save", "Error generating objectID", err, object)
 	}
 
 	filter := bson.M{"_id": objectID}
 
 	if _, err := c.collection.ReplaceOne(c.context, filter, object); err != nil {
-		return derp.NewInternalError("mongodb.Save", "Error replacing object", err.Error(), filter, object)
+		return derp.InternalError("mongodb.Save", "Error replacing object", err.Error(), filter, object)
 	}
 
 	return nil
@@ -133,7 +133,7 @@ func (c Collection) Save(object data.Object, note string) error {
 func (c Collection) Delete(object data.Object, note string) error {
 
 	if object.IsNew() {
-		return derp.NewBadRequestError("mongo.Delete", "Cannot delete a new object", object, note)
+		return derp.BadRequestError("mongo.Delete", "Cannot delete a new object", object, note)
 	}
 
 	// Use virtual delete to mark this object as deleted.
