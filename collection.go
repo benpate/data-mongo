@@ -70,16 +70,16 @@ func (c Collection) Query(target any, criteria exp.Expression, options ...option
 	optionsBSON := convertOptions(options...)
 	cursor, err := c.collection.Find(c.context, criteriaBSON, optionsBSON)
 
+	if isTimeoutExceeded(startTime) {
+		c.timeoutError(location, startTime, criteriaBSON)
+	}
+
 	if err != nil {
 		return derp.InternalError(location, "Error Listing Objects", err.Error(), criteriaBSON, options)
 	}
 
 	if err := cursor.All(c.context, target); err != nil {
 		return derp.Wrap(err, location, "Error unmarshalling database objects", target, criteriaBSON, options)
-	}
-
-	if isTimeoutExceeded(startTime) {
-		c.timeoutError(location, startTime, criteriaBSON)
 	}
 
 	return nil
@@ -100,12 +100,12 @@ func (c Collection) Iterator(criteria exp.Expression, options ...option.Option) 
 	optionsBSON := convertOptions(options...)
 	cursor, err := c.collection.Find(c.context, criteriaBSON, optionsBSON)
 
-	if err != nil {
-		return NewIterator(c.context, cursor), derp.InternalError(location, "Error Listing Objects", err.Error(), criteria, criteriaBSON, options)
-	}
-
 	if isTimeoutExceeded(startTime) {
 		c.timeoutError(location, startTime, criteriaBSON)
+	}
+
+	if err != nil {
+		return NewIterator(c.context, cursor), derp.InternalError(location, "Error Listing Objects", err.Error(), criteria, criteriaBSON, options)
 	}
 
 	iterator := NewIterator(c.context, cursor)
@@ -126,17 +126,19 @@ func (c Collection) Load(criteria exp.Expression, target data.Object) error {
 
 	criteriaBSON := ExpressionToBSON(criteria)
 
-	if err := c.collection.FindOne(c.context, criteriaBSON).Decode(target); err != nil {
+	err := c.collection.FindOne(c.context, criteriaBSON).Decode(target)
+
+	if isTimeoutExceeded(startTime) {
+		c.timeoutError(location, startTime, criteriaBSON)
+	}
+
+	if err != nil {
 
 		if err == mongo.ErrNoDocuments {
 			return derp.NotFoundError("mongodb.Load", "Error loading object", err.Error(), criteria, criteriaBSON, target)
 		}
 
 		return derp.InternalError("mongodb.Load", "Error loading object", err.Error(), criteria, criteriaBSON, target)
-	}
-
-	if isTimeoutExceeded(startTime) {
-		c.timeoutError(location, startTime, criteriaBSON)
 	}
 
 	return nil
