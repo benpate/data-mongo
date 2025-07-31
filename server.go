@@ -46,6 +46,10 @@ func (server Server) Session(ctx context.Context) (data.Session, error) {
 }
 
 // Mongo returns the underlying mongodb client for libraries that need to bypass this abstraction.
-func (server Server) Mongo() *mongo.Client {
+func (server Server) Client() *mongo.Client {
 	return server.client
+}
+
+func (server Server) Database() *mongo.Database {
+	return server.database
 }

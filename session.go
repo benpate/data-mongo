@@ -32,6 +32,11 @@ func (s Session) Collection(collection string) data.Collection {
 	}
 }
 
+// Context returns the context associated with this session.
+func (s Session) Context() context.Context {
+	return s.context
+}
+
 // Close cleans up any remaining connections that need to be removed.
 func (s Session) Close() {
 	if err := s.database.Client().Disconnect(s.context); err != nil {
