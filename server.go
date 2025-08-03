@@ -36,6 +36,15 @@ func New(uri string, database string, opt *options.ClientOptions) (Server, error
 	return result, nil
 }
 
+// Mongo returns the underlying mongodb client for libraries that need to bypass this abstraction.
+func (server Server) Client() *mongo.Client {
+	return server.client
+}
+
+func (server Server) Database() *mongo.Database {
+	return server.database
+}
+
 // Session returns a new client session that can be used to perform CRUD transactions on this datastore.
 func (server Server) Session(ctx context.Context) (data.Session, error) {
 
@@ -45,11 +54,27 @@ func (server Server) Session(ctx context.Context) (data.Session, error) {
 	}, nil
 }
 
-// Mongo returns the underlying mongodb client for libraries that need to bypass this abstraction.
-func (server Server) Client() *mongo.Client {
-	return server.client
-}
+func (server Server) WithTransaction(ctx context.Context, fn data.TransactionCallbackFunc) (any, error) {
 
-func (server Server) Database() *mongo.Database {
-	return server.database
+	const location = "data-mongo.server.WithTransaction"
+
+	// Start a Session
+	mongoSession, err := server.Client().StartSession()
+
+	if err != nil {
+		return nil, derp.Wrap(err, location, "Unable to start database session")
+	}
+
+	defer mongoSession.EndSession(ctx)
+
+	// Execute a MongoDB transaction with the new session, passing a standard
+	// data.Session to the callback
+	return mongoSession.WithTransaction(ctx, func(ctx mongo.SessionContext) (any, error) {
+		session := Session{
+			database: server.database,
+			context:  ctx,
+		}
+
+		return fn(session)
+	})
 }
