@@ -4,6 +4,8 @@ go 1.23.0
 
 toolchain go1.24.1
 
+replace github.com/benpate/data => ../data
+
 require (
 	github.com/benpate/data v0.30.0
 	github.com/benpate/derp v0.32.4
