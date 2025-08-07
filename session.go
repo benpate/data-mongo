@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/benpate/data"
-	"github.com/benpate/derp"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -39,9 +38,9 @@ func (s Session) Context() context.Context {
 
 // Close cleans up any remaining connections that need to be removed.
 func (s Session) Close() {
-	if err := s.database.Client().Disconnect(s.context); err != nil {
-		derp.Report(derp.Wrap(err, "mongodb.Session.Close", "Error disconnecting from database"))
-	}
+	//	if err := s.database.Client().Disconnect(s.context); err != nil {
+	//		derp.Report(derp.Wrap(err, "mongodb.Session.Close", "Error disconnecting from database"))
+	//	}
 }
 
 // Mongo returns the underlying mongodb client for libraries that need to bypass this abstraction.

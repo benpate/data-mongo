@@ -28,6 +28,10 @@ func NewCollection(collection *mongo.Collection) Collection {
 	}
 }
 
+func (c Collection) Context() context.Context {
+	return c.context
+}
+
 func (c Collection) Count(criteria exp.Expression, _ ...option.Option) (int64, error) {
 
 	const location = "data-mongo.Collection.Count"
