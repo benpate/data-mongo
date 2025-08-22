@@ -57,36 +57,4 @@ func TestExpression(t *testing.T) {
 		assert.Equal(t, toJSON(ExpressionToBSON(pred6)), `{"$and":[{"$or":[{"name":{"$eq":"John Connor"}},{"favorite_color":{"$eq":"blue"}}]},{"$or":[{"name":{"$eq":"Sara Connor"}},{"favorite_color":{"$eq":"green"}}]}]}`)
 
 	}
-	/*
-		// Test that all operators are translated correctly.
-		ops := exp.New{
-		ops.Add("=", exp.OperatorEqual, 0)
-		ops.Add("!=", exp.OperatorNotEqual, 0)
-		ops.Add("<", exp.OperatorLessThan, 0)
-		ops.Add("<=", exp.OperatorLessOrEqual, 0)
-		ops.Add(">", exp.OperatorGreaterThan, 0)
-		ops.Add(">=", exp.OperatorGreaterOrEqual, 0)
-		ops.Add("OTHER", "OTHER", 0)
-
-		assert.Equal(t, "=", ops[0].Name)
-		assert.Equal(t, "=", ops[0].Operator)
-
-		assert.Equal(t, "!=", ops[1].Name)
-		assert.Equal(t, "!=", ops[1].Operator)
-
-		assert.Equal(t, "<", ops[2].Name)
-		assert.Equal(t, "<", ops[2].Operator)
-
-		assert.Equal(t, "<=", ops[3].Name)
-		assert.Equal(t, "<=", ops[3].Operator)
-
-		assert.Equal(t, ">", ops[4].Name)
-		assert.Equal(t, ">", ops[4].Operator)
-
-		assert.Equal(t, ">=", ops[5].Name)
-		assert.Equal(t, ">=", ops[5].Operator)
-
-		assert.Equal(t, "OTHER", ops[6].Name)
-		assert.Equal(t, "=", ops[6].Operator)
-	*/
 }
