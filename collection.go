@@ -71,7 +71,7 @@ func (c Collection) Query(target any, criteria exp.Expression, options ...option
 	}
 
 	criteriaBSON := ExpressionToBSON(criteria)
-	optionsBSON := convertOptions(options...)
+	optionsBSON := findOptions(options...)
 	cursor, err := c.collection.Find(c.context, criteriaBSON, optionsBSON)
 
 	if isTimeoutExceeded(startTime) {
@@ -101,7 +101,7 @@ func (c Collection) Iterator(criteria exp.Expression, options ...option.Option) 
 	}
 
 	criteriaBSON := ExpressionToBSON(criteria)
-	optionsBSON := convertOptions(options...)
+	optionsBSON := findOptions(options...)
 	cursor, err := c.collection.Find(c.context, criteriaBSON, optionsBSON)
 
 	if isTimeoutExceeded(startTime) {
@@ -118,7 +118,7 @@ func (c Collection) Iterator(criteria exp.Expression, options ...option.Option) 
 }
 
 // Load retrieves a single object from the database
-func (c Collection) Load(criteria exp.Expression, target data.Object) error {
+func (c Collection) Load(criteria exp.Expression, target data.Object, options ...option.Option) error {
 
 	const location = "data-mongo.Collection.Load"
 
@@ -130,7 +130,9 @@ func (c Collection) Load(criteria exp.Expression, target data.Object) error {
 
 	criteriaBSON := ExpressionToBSON(criteria)
 
-	err := c.collection.FindOne(c.context, criteriaBSON).Decode(target)
+	optionsBSON := findOneOptions(options...)
+
+	err := c.collection.FindOne(c.context, criteriaBSON, optionsBSON).Decode(target)
 
 	if isTimeoutExceeded(startTime) {
 		c.timeoutError(location, startTime, criteriaBSON)
