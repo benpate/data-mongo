@@ -2,7 +2,6 @@ package mongodb
 
 import (
 	dataOption "github.com/benpate/data/option"
-	"github.com/davecgh/go-spew/spew"
 	bson "go.mongodb.org/mongo-driver/bson"
 	mongoOptions "go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -60,8 +59,6 @@ func findOptions(options ...dataOption.Option) *mongoOptions.FindOptions {
 }
 
 func findOneOptions(options ...dataOption.Option) *mongoOptions.FindOneOptions {
-
-	spew.Dump(options)
 
 	if len(options) == 0 {
 		return nil
