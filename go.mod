@@ -5,9 +5,9 @@ go 1.24.0
 toolchain go1.24.1
 
 require (
-	github.com/benpate/data v0.31.0
+	github.com/benpate/data v0.31.1
 	github.com/benpate/derp v0.34.0
-	github.com/benpate/exp v0.8.6
+	github.com/benpate/exp v0.8.7
 	github.com/stretchr/testify v1.11.1
 	go.mongodb.org/mongo-driver v1.17.6
 )
