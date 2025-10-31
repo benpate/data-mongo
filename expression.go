@@ -107,6 +107,21 @@ func operatorBSON(operator string, value any) bson.M {
 			return bson.M{"$regex": primitive.Regex{Pattern: valueString + "$", Options: "i"}}
 		}
 
+	// Geometric search within a polygon
+	case exp.OperatorInPolygon:
+
+		if polygon, isPolygon := value.([][]float64); isPolygon {
+
+			return bson.M{
+				"$geoWithin": bson.M{
+					"$geometry": bson.M{
+						"type":        "Polygon",
+						"coordinates": bson.A{polygon},
+					},
+				},
+			}
+		}
+
 	default:
 		return bson.M{"$eq": value}
 	}
