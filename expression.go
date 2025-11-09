@@ -64,7 +64,10 @@ func ExpressionToBSON(criteria exp.Expression) bson.M {
 // operatorBSON converts a standard data.Operator into the operators used by mongodb
 func operatorBSON(operator string, value any) bson.M {
 
+	const location = "data-mongo.operatorBSON"
+
 	switch operator {
+
 	case exp.OperatorEqual:
 		return bson.M{"$eq": value}
 
@@ -93,34 +96,30 @@ func operatorBSON(operator string, value any) bson.M {
 		return bson.M{"$all": value}
 
 	case exp.OperatorBeginsWith:
-		if valueString, ok := value.(string); ok {
+		if valueString, isString := value.(string); isString {
 			return bson.M{"$regex": primitive.Regex{Pattern: "^" + valueString, Options: "i"}}
 		}
 
 	case exp.OperatorContains:
-		if valueString, ok := value.(string); ok {
+		if valueString, isString := value.(string); isString {
 			return bson.M{"$regex": primitive.Regex{Pattern: valueString, Options: "i"}}
 		}
 
 	case exp.OperatorEndsWith:
-		if valueString, ok := value.(string); ok {
+		if valueString, isString := value.(string); isString {
 			return bson.M{"$regex": primitive.Regex{Pattern: valueString + "$", Options: "i"}}
 		}
 
-	// Geometric search within a polygon
-	case exp.OperatorInPolygon:
-
-		if polygon, isPolygon := value.([][]float64); isPolygon {
-
-			return bson.M{
-				"$geoWithin": bson.M{
-					"$geometry": bson.M{
-						"type":        "Polygon",
-						"coordinates": bson.A{polygon},
-					},
-				},
-			}
+	case exp.OperatorExists:
+		if valueBool, isBool := value.(bool); isBool {
+			return bson.M{"$exists": valueBool}
 		}
+
+	case exp.OperatorGeoWithin:
+		return bson.M{"$geoWithin": bson.M{"$geometry": value}}
+
+	case exp.OperatorGeoIntersects:
+		return bson.M{"$geoIntersects": bson.M{"$geometry": value}}
 
 	default:
 		return bson.M{"$eq": value}
