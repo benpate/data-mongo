@@ -64,8 +64,6 @@ func ExpressionToBSON(criteria exp.Expression) bson.M {
 // operatorBSON converts a standard data.Operator into the operators used by mongodb
 func operatorBSON(operator string, value any) bson.M {
 
-	const location = "data-mongo.operatorBSON"
-
 	switch operator {
 
 	case exp.OperatorEqual:
