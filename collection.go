@@ -168,7 +168,7 @@ func (c Collection) Save(object data.Object, note string) error {
 		object.SetCreated(note)
 
 		if _, err := c.collection.InsertOne(c.context, object); err != nil {
-			return derp.Wrap(err, location, "Unable to insert object", object, derp.WithCode(500))
+			return derp.Wrap(err, location, "Unable to insert object", object, derp.WithBadRequest())
 		}
 
 		if isTimeoutExceeded(startTime) {
@@ -189,7 +189,7 @@ func (c Collection) Save(object data.Object, note string) error {
 	filter := bson.M{"_id": objectID}
 
 	if _, err := c.collection.ReplaceOne(c.context, filter, object); err != nil {
-		return derp.Wrap(err, location, "Unable to replace object", filter, object, derp.WithCode(500))
+		return derp.Wrap(err, location, "Unable to replace object", filter, object, derp.WithBadRequest())
 	}
 
 	if isTimeoutExceeded(startTime) {
