@@ -129,22 +129,21 @@ func (c Collection) Load(criteria exp.Expression, target data.Object, options ..
 	}
 
 	criteriaBSON := ExpressionToBSON(criteria)
-
 	optionsBSON := findOneOptions(options...)
 
-	err := c.collection.FindOne(c.context, criteriaBSON, optionsBSON).Decode(target)
-
-	if isTimeoutExceeded(startTime) {
-		c.timeoutError(location, startTime, criteriaBSON)
-	}
-
-	if err != nil {
+	// Try to query the database
+	if err := c.collection.FindOne(c.context, criteriaBSON, optionsBSON).Decode(target); err != nil {
 
 		if err == mongo.ErrNoDocuments {
 			return derp.NotFoundError("mongodb.Load", "Unable to load object", err.Error(), criteria, criteriaBSON, target)
 		}
 
 		return derp.InternalError("mongodb.Load", "Unable to load object", err.Error(), criteria, criteriaBSON, target)
+	}
+
+	// Check timeouts
+	if isTimeoutExceeded(startTime) {
+		c.timeoutError(location, startTime, criteriaBSON)
 	}
 
 	return nil
