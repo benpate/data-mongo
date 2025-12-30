@@ -44,7 +44,7 @@ func (iterator Iterator) Next(output any) bool {
 func (iterator Iterator) Close() error {
 
 	if err := iterator.Cursor.Close(iterator.Context); err != nil {
-		return derp.InternalError("mongodb.Iterator.Close", err.Error())
+		return derp.Internal("mongodb.Iterator.Close", err.Error())
 	}
 
 	return nil

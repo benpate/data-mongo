@@ -49,7 +49,7 @@ func (c Collection) Count(criteria exp.Expression, _ ...option.Option) (int64, e
 	count, err := c.collection.CountDocuments(c.context, criteriaBSON)
 
 	if err != nil {
-		return 0, derp.InternalError(location, "Unable to count objects", err.Error(), criteriaBSON)
+		return 0, derp.Internal(location, "Unable to count objects", err.Error(), criteriaBSON)
 	}
 
 	if isTimeoutExceeded(startTime) {
@@ -79,7 +79,7 @@ func (c Collection) Query(target any, criteria exp.Expression, options ...option
 	}
 
 	if err != nil {
-		return derp.InternalError(location, "Unable to list objects", err.Error(), criteriaBSON, options)
+		return derp.Internal(location, "Unable to list objects", err.Error(), criteriaBSON, options)
 	}
 
 	if err := cursor.All(c.context, target); err != nil {
@@ -109,7 +109,7 @@ func (c Collection) Iterator(criteria exp.Expression, options ...option.Option) 
 	}
 
 	if err != nil {
-		return NewIterator(c.context, cursor), derp.InternalError(location, "Error Listing Objects", err.Error(), criteria, criteriaBSON, options)
+		return NewIterator(c.context, cursor), derp.Internal(location, "Error Listing Objects", err.Error(), criteria, criteriaBSON, options)
 	}
 
 	iterator := NewIterator(c.context, cursor)
@@ -135,10 +135,10 @@ func (c Collection) Load(criteria exp.Expression, target data.Object, options ..
 	if err := c.collection.FindOne(c.context, criteriaBSON, optionsBSON).Decode(target); err != nil {
 
 		if err == mongo.ErrNoDocuments {
-			return derp.NotFoundError("mongodb.Load", "Unable to load object", err.Error(), criteria, criteriaBSON, target)
+			return derp.NotFound("mongodb.Load", "Unable to load object", err.Error(), criteria, criteriaBSON, target)
 		}
 
-		return derp.InternalError("mongodb.Load", "Unable to load object", err.Error(), criteria, criteriaBSON, target)
+		return derp.Internal("mongodb.Load", "Unable to load object", err.Error(), criteria, criteriaBSON, target)
 	}
 
 	// Check timeouts
@@ -182,7 +182,7 @@ func (c Collection) Save(object data.Object, note string) error {
 	objectID, err := primitive.ObjectIDFromHex(object.ID())
 
 	if err != nil {
-		return derp.InternalError(location, "Unable to generate objectID", err, object)
+		return derp.Internal(location, "Unable to generate objectID", err, object)
 	}
 
 	filter := bson.M{"_id": objectID}
@@ -210,14 +210,14 @@ func (c Collection) Delete(object data.Object, note string) error {
 	}
 
 	if object.IsNew() {
-		return derp.BadRequestError(location, "Unable to delete a new object", object, note)
+		return derp.BadRequest(location, "Unable to delete a new object", object, note)
 	}
 
 	// Use virtual delete to mark this object as deleted.
 	object.SetDeleted(note)
 
 	if err := c.Save(object, note); err != nil {
-		return derp.InternalError(location, "Unable to perform virtual delete", err.Error(), object)
+		return derp.Internal(location, "Unable to perform virtual delete", err.Error(), object)
 	}
 
 	if isTimeoutExceeded(startTime) {
