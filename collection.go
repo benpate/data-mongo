@@ -38,24 +38,16 @@ func (c Collection) Count(criteria exp.Expression, _ ...option.Option) (int64, e
 
 	const location = "data-mongo.Collection.Count"
 
-	var startTime int64
-
-	if logTimeout > 0 {
-		startTime = time.Now().UnixMilli()
-	}
-
 	// TODO: LOW: Add options to this function
 	// https://pkg.go.dev/go.mongodb.org/mongo-driver/mongo/options#CountOptions
 
 	criteriaBSON := ExpressionToBSON(criteria)
+	defer c.reportIfSlow(location, startTimer(), criteriaBSON)
+
 	count, err := c.collection.CountDocuments(c.context, criteriaBSON)
 
 	if err != nil {
 		return 0, derp.Internal(location, "Unable to count objects", err.Error(), criteriaBSON)
-	}
-
-	if isTimeoutExceeded(startTime) {
-		c.timeoutError(location, startTime, criteriaBSON)
 	}
 
 	return count, nil
@@ -66,19 +58,11 @@ func (c Collection) Query(target any, criteria exp.Expression, options ...option
 
 	const location = "data-mongo.Collection.Query"
 
-	var startTime int64
-
-	if logTimeout > 0 {
-		startTime = time.Now().UnixMilli()
-	}
-
 	criteriaBSON := ExpressionToBSON(criteria)
+	defer c.reportIfSlow(location, startTimer(), criteriaBSON)
+
 	optionsBSON := findOptions(options...)
 	cursor, err := c.collection.Find(c.context, criteriaBSON, optionsBSON)
-
-	if isTimeoutExceeded(startTime) {
-		c.timeoutError(location, startTime, criteriaBSON)
-	}
 
 	if err != nil {
 		return derp.Internal(location, "Unable to list objects", err.Error(), criteriaBSON, options)
@@ -96,19 +80,11 @@ func (c Collection) Iterator(criteria exp.Expression, options ...option.Option) 
 
 	const location = "data-mongo.Collection.Iterator"
 
-	var startTime int64
-
-	if logTimeout > 0 {
-		startTime = time.Now().UnixMilli()
-	}
-
 	criteriaBSON := ExpressionToBSON(criteria)
+	defer c.reportIfSlow(location, startTimer(), criteriaBSON)
+
 	optionsBSON := findOptions(options...)
 	cursor, err := c.collection.Find(c.context, criteriaBSON, optionsBSON)
-
-	if isTimeoutExceeded(startTime) {
-		c.timeoutError(location, startTime, criteriaBSON)
-	}
 
 	if err != nil {
 		return NewIterator(c.context, cursor), derp.Internal(location, "Error Listing Objects", err.Error(), criteria, criteriaBSON, options)
@@ -124,13 +100,9 @@ func (c Collection) Load(criteria exp.Expression, target data.Object, options ..
 
 	const location = "data-mongo.Collection.Load"
 
-	var startTime int64
-
-	if logTimeout > 0 {
-		startTime = time.Now().UnixMilli()
-	}
-
 	criteriaBSON := ExpressionToBSON(criteria)
+	defer c.reportIfSlow(location, startTimer(), criteriaBSON)
+
 	optionsBSON := findOneOptions(options...)
 
 	// Try to query the database
@@ -143,11 +115,6 @@ func (c Collection) Load(criteria exp.Expression, target data.Object, options ..
 		return derp.Internal("mongodb.Load", "Unable to load object", err.Error(), criteria, criteriaBSON, target)
 	}
 
-	// Check timeouts
-	if isTimeoutExceeded(startTime) {
-		c.timeoutError(location, startTime, criteriaBSON)
-	}
-
 	return nil
 }
 
@@ -156,11 +123,9 @@ func (c Collection) Save(object data.Object, note string) error {
 
 	const location = "data-mongo.Collection.Save"
 
-	var startTime int64
-
-	if logTimeout > 0 {
-		startTime = time.Now().UnixMilli()
-	}
+	// object.ID() is read lazily, since an INSERT may assign it during this call.
+	startTime := startTimer()
+	defer func() { c.reportIfSlow(location, startTime, object.ID()) }()
 
 	object.SetUpdated(note)
 
@@ -170,10 +135,6 @@ func (c Collection) Save(object data.Object, note string) error {
 
 		if _, err := c.collection.InsertOne(c.context, object); err != nil {
 			return derp.Wrap(err, location, "Unable to insert object", object, derp.WithBadRequest())
-		}
-
-		if isTimeoutExceeded(startTime) {
-			c.timeoutError(location, startTime, object.ID())
 		}
 
 		return nil
@@ -193,10 +154,6 @@ func (c Collection) Save(object data.Object, note string) error {
 		return derp.Wrap(err, location, "Unable to replace object", filter, object, derp.WithBadRequest())
 	}
 
-	if isTimeoutExceeded(startTime) {
-		c.timeoutError(location, startTime, object.ID())
-	}
-
 	return nil
 }
 
@@ -205,11 +162,7 @@ func (c Collection) Delete(object data.Object, note string) error {
 
 	const location = "data-mongo.Collection.Delete"
 
-	var startTime int64
-
-	if logTimeout > 0 {
-		startTime = time.Now().UnixMilli()
-	}
+	defer c.reportIfSlow(location, startTimer(), object.ID())
 
 	if object.IsNew() {
 		return derp.BadRequest(location, "Unable to delete a new object", object, note)
@@ -222,10 +175,6 @@ func (c Collection) Delete(object data.Object, note string) error {
 		return derp.Internal(location, "Unable to perform virtual delete", err.Error(), object)
 	}
 
-	if isTimeoutExceeded(startTime) {
-		c.timeoutError(location, startTime, object.ID())
-	}
-
 	return nil
 }
 
@@ -234,20 +183,11 @@ func (c Collection) HardDelete(criteria exp.Expression) error {
 
 	const location = "data-mongo.Collection.HardDelete"
 
-	var startTime int64
-
-	if logTimeout > 0 {
-		startTime = time.Now().UnixMilli()
-	}
-
 	criteriaBSON := ExpressionToBSON(criteria)
+	defer c.reportIfSlow(location, startTimer(), criteriaBSON)
 
 	if _, err := c.collection.DeleteMany(c.context, criteriaBSON); err != nil {
 		return derp.Wrap(err, location, "Unable to hard delete object", criteria)
-	}
-
-	if isTimeoutExceeded(startTime) {
-		c.timeoutError(location, startTime, criteriaBSON)
 	}
 
 	return nil
@@ -256,6 +196,15 @@ func (c Collection) HardDelete(criteria exp.Expression) error {
 // Mongo returns the underlying mongodb collection for libraries that need to bypass this abstraction.
 func (c Collection) Mongo() *mongo.Collection {
 	return c.collection
+}
+
+// reportIfSlow logs a slow-query warning when the time elapsed since startTime
+// exceeds the configured threshold.  It is meant to be deferred at the top of
+// each query method.
+func (c Collection) reportIfSlow(location string, startTime int64, data ...any) {
+	if isTimeoutExceeded(startTime) {
+		c.timeoutError(location, startTime, data...)
+	}
 }
 
 func (c Collection) timeoutError(location string, startTime int64, data ...any) {
