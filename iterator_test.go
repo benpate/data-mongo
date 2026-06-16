@@ -25,6 +25,20 @@ func TestNewIterator(t *testing.T) {
 	assert.Same(t, cursor, iterator.Cursor)
 }
 
+// A cursor-less iterator (the zero value, or one returned alongside an error)
+// must behave like an empty iterator instead of panicking on a nil cursor.
+func TestIterator_NilCursor(t *testing.T) {
+
+	iterator := Iterator{} // no cursor
+
+	assert.NotPanics(t, func() {
+		assert.Equal(t, 0, iterator.Count())
+		assert.False(t, iterator.Next(&testPerson{}))
+		assert.NoError(t, iterator.Error())
+		assert.NoError(t, iterator.Close())
+	})
+}
+
 /******************************************
  * Iterator (live cursor)
  ******************************************/
