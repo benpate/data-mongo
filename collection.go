@@ -110,10 +110,10 @@ func (c Collection) Load(criteria exp.Expression, target data.Object, options ..
 	if err := c.collection.FindOne(c.context, criteriaBSON, optionsBSON).Decode(target); err != nil {
 
 		if err == mongo.ErrNoDocuments {
-			return derp.NotFound("mongodb.Load", "Unable to load object", err.Error(), criteria, criteriaBSON, target)
+			return derp.Wrap(err, location, "Unable to load object", criteria, criteriaBSON, target, derp.WithCode(http.StatusNotFound))
 		}
 
-		return derp.Internal("mongodb.Load", "Unable to load object", err.Error(), criteria, criteriaBSON, target)
+		return derp.Wrap(err, location, "Unable to load object", criteria, criteriaBSON, target, derp.WithCode(http.StatusInternalServerError))
 	}
 
 	return nil

@@ -12,6 +12,7 @@ import (
 	"github.com/benpate/exp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 // Compile-time proof that Collection satisfies the data.Collection interface.
@@ -133,7 +134,8 @@ func TestCollection_Load_NotFound(t *testing.T) {
 	err := collection.Load(exp.Equal("name", "Nobody"), &loaded)
 
 	require.Error(t, err)
-	assert.True(t, derp.IsNotFound(err))
+	assert.True(t, derp.IsNotFound(err))         // mapped to a 404
+	assert.ErrorIs(t, err, mongo.ErrNoDocuments) // driver error preserved in the chain
 }
 
 func TestCollection_Load_WithFieldsOption(t *testing.T) {
