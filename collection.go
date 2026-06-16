@@ -28,10 +28,12 @@ func NewCollection(collection *mongo.Collection) Collection {
 	}
 }
 
+// Context returns the context associated with this collection.
 func (c Collection) Context() context.Context {
 	return c.context
 }
 
+// Count returns the number of records in the collection that match the provided criteria.
 func (c Collection) Count(criteria exp.Expression, _ ...option.Option) (int64, error) {
 
 	const location = "data-mongo.Collection.Count"

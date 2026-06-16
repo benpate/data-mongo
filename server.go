@@ -1,3 +1,7 @@
+// Package mongodb implements the benpate/data interfaces (Server, Session,
+// Collection, Iterator) on top of the official MongoDB Go driver, so that
+// application code can perform CRUD operations against MongoDB without
+// depending on the driver directly.
 package mongodb
 
 import (
@@ -42,6 +46,7 @@ func New(uri string, database string, opt *options.ClientOptions) (Server, error
 	return result, nil
 }
 
+// NewServer wraps an existing *mongo.Database in a data.Server.
 func NewServer(database *mongo.Database) Server {
 	return Server{
 		client:   database.Client(),
@@ -49,11 +54,12 @@ func NewServer(database *mongo.Database) Server {
 	}
 }
 
-// Mongo returns the underlying mongodb client for libraries that need to bypass this abstraction.
+// Client returns the underlying mongodb client for libraries that need to bypass this abstraction.
 func (server Server) Client() *mongo.Client {
 	return server.client
 }
 
+// Database returns the underlying mongodb database for libraries that need to bypass this abstraction.
 func (server Server) Database() *mongo.Database {
 	return server.database
 }
@@ -66,6 +72,9 @@ func (server Server) Session(ctx context.Context) (data.Session, error) {
 	}, nil
 }
 
+// WithTransaction runs fn inside a MongoDB transaction, committing if it returns
+// nil and rolling back if it returns an error.  Transactions require the server
+// to be a replica set or mongos.
 func (server Server) WithTransaction(ctx context.Context, fn data.TransactionCallbackFunc) (any, error) {
 
 	const location = "data-mongo.server.WithTransaction"

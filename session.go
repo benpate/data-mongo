@@ -36,11 +36,13 @@ func (s Session) Context() context.Context {
 	return s.context
 }
 
-// Close cleans up any remaining connections that need to be removed.
+// Close is a no-op that exists to satisfy the data.Session interface.  This
+// Session holds no per-session resources: connections are owned by the
+// long-lived *mongo.Client pool and recycled automatically after each
+// operation.  Callers release per-request resources by cancelling the context
+// they passed to Server.Session, not by calling Close.
 func (s Session) Close() {
-	//	if err := s.database.Client().Disconnect(s.context); err != nil {
-	//		derp.Report(derp.Wrap(err, "mongodb.Session.Close", "Error disconnecting from database"))
-	//	}
+	// Intentionally empty: there are no per-session resources to release.
 }
 
 // Mongo returns the underlying mongodb client for libraries that need to bypass this abstraction.
