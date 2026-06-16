@@ -2,6 +2,7 @@ package mongodb
 
 import (
 	"context"
+	"net/http"
 	"testing"
 	"time"
 
@@ -263,6 +264,25 @@ func TestCollection_Delete_NewObject(t *testing.T) {
 
 	err := collection.Delete(person, "deleting")
 	require.Error(t, err)
+}
+
+// When the underlying Save fails, Delete wraps the error while preserving both
+// the 500 status code and the original error in the chain.
+func TestCollection_Delete_SaveError(t *testing.T) {
+
+	collection := getTestCollection(t)
+
+	object := &badIDObject{}
+	object.markOld() // not new => Delete proceeds to Save, which fails on the bad ID
+
+	err := collection.Delete(object, "deleting")
+
+	require.Error(t, err)
+	assert.Equal(t, http.StatusInternalServerError, derp.ErrorCode(err)) // status preserved
+
+	// The inner Save error is still reachable through the chain.  Before the H2
+	// fix it was flattened to a string and the root message was the outer one.
+	assert.Equal(t, "Unable to generate objectID", derp.RootMessage(err))
 }
 
 /******************************************

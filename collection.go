@@ -2,6 +2,7 @@ package mongodb
 
 import (
 	"context"
+	"net/http"
 	"strconv"
 	"time"
 
@@ -47,7 +48,7 @@ func (c Collection) Count(criteria exp.Expression, _ ...option.Option) (int64, e
 	count, err := c.collection.CountDocuments(c.context, criteriaBSON)
 
 	if err != nil {
-		return 0, derp.Internal(location, "Unable to count objects", err.Error(), criteriaBSON)
+		return 0, derp.Wrap(err, location, "Unable to count objects", criteriaBSON, derp.WithCode(http.StatusInternalServerError))
 	}
 
 	return count, nil
@@ -65,7 +66,7 @@ func (c Collection) Query(target any, criteria exp.Expression, options ...option
 	cursor, err := c.collection.Find(c.context, criteriaBSON, optionsBSON)
 
 	if err != nil {
-		return derp.Internal(location, "Unable to list objects", err.Error(), criteriaBSON, options)
+		return derp.Wrap(err, location, "Unable to list objects", criteriaBSON, options, derp.WithCode(http.StatusInternalServerError))
 	}
 
 	if err := cursor.All(c.context, target); err != nil {
@@ -87,7 +88,7 @@ func (c Collection) Iterator(criteria exp.Expression, options ...option.Option) 
 	cursor, err := c.collection.Find(c.context, criteriaBSON, optionsBSON)
 
 	if err != nil {
-		return NewIterator(c.context, cursor), derp.Internal(location, "Error Listing Objects", err.Error(), criteria, criteriaBSON, options)
+		return NewIterator(c.context, cursor), derp.Wrap(err, location, "Error Listing Objects", criteria, criteriaBSON, options, derp.WithCode(http.StatusInternalServerError))
 	}
 
 	iterator := NewIterator(c.context, cursor)
@@ -172,7 +173,7 @@ func (c Collection) Delete(object data.Object, note string) error {
 	object.SetDeleted(note)
 
 	if err := c.Save(object, note); err != nil {
-		return derp.Internal(location, "Unable to perform virtual delete", err.Error(), object)
+		return derp.Wrap(err, location, "Unable to perform virtual delete", object, derp.WithCode(http.StatusInternalServerError))
 	}
 
 	return nil
