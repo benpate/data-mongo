@@ -12,6 +12,7 @@ import (
 	"github.com/benpate/exp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -282,9 +283,9 @@ func TestCollection_Delete_SaveError(t *testing.T) {
 	require.Error(t, err)
 	assert.Equal(t, http.StatusInternalServerError, derp.ErrorCode(err)) // status preserved
 
-	// The inner Save error is still reachable through the chain.  Before the H2
-	// fix it was flattened to a string and the root message was the outer one.
-	assert.Equal(t, "Unable to generate objectID", derp.RootMessage(err))
+	// The original driver error is still reachable through the chain (Delete ->
+	// Save -> ObjectIDFromHex).  Before the H2 fix it was flattened to a string.
+	assert.ErrorIs(t, err, primitive.ErrInvalidHex)
 }
 
 /******************************************

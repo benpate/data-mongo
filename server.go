@@ -35,7 +35,7 @@ func New(uri string, database string, opt *options.ClientOptions) (Server, error
 
 	if err != nil {
 		// The connection URI is deliberately omitted; it can carry credentials.
-		return Server{}, derp.Wrap(err, location, "Unable to connect to mongodb server", database)
+		return Server{}, derp.Wrap(err, location, "Connecting to mongodb server", database)
 	}
 
 	// Return a wrapped "data.Server" value
@@ -91,7 +91,7 @@ func (server Server) WithTransaction(ctx context.Context, fn data.TransactionCal
 	mongoSession, err := server.Client().StartSession(sessionOptions)
 
 	if err != nil {
-		return nil, derp.Wrap(err, location, "Unable to start database session")
+		return nil, derp.Wrap(err, location, "Starting database session")
 	}
 
 	defer mongoSession.EndSession(ctx)

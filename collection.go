@@ -48,7 +48,7 @@ func (c Collection) Count(criteria exp.Expression, _ ...option.Option) (int64, e
 	count, err := c.collection.CountDocuments(c.context, criteriaBSON)
 
 	if err != nil {
-		return 0, derp.Wrap(err, location, "Unable to count objects", criteriaBSON, derp.WithCode(http.StatusInternalServerError))
+		return 0, derp.Wrap(err, location, "Counting objects", criteriaBSON, derp.WithCode(http.StatusInternalServerError))
 	}
 
 	return count, nil
@@ -66,11 +66,11 @@ func (c Collection) Query(target any, criteria exp.Expression, options ...option
 	cursor, err := c.collection.Find(c.context, criteriaBSON, optionsBSON)
 
 	if err != nil {
-		return derp.Wrap(err, location, "Unable to list objects", criteriaBSON, options, derp.WithCode(http.StatusInternalServerError))
+		return derp.Wrap(err, location, "Listing objects", criteriaBSON, options, derp.WithCode(http.StatusInternalServerError))
 	}
 
 	if err := cursor.All(c.context, target); err != nil {
-		return derp.Wrap(err, location, "Unable to unmarshal database objects", target, criteriaBSON, options)
+		return derp.Wrap(err, location, "Unmarshaling database objects", target, criteriaBSON, options)
 	}
 
 	return nil
@@ -88,7 +88,7 @@ func (c Collection) Iterator(criteria exp.Expression, options ...option.Option) 
 	cursor, err := c.collection.Find(c.context, criteriaBSON, optionsBSON)
 
 	if err != nil {
-		return NewIterator(c.context, cursor), derp.Wrap(err, location, "Error Listing Objects", criteria, criteriaBSON, options, derp.WithCode(http.StatusInternalServerError))
+		return NewIterator(c.context, cursor), derp.Wrap(err, location, "Listing objects", criteria, criteriaBSON, options, derp.WithCode(http.StatusInternalServerError))
 	}
 
 	iterator := NewIterator(c.context, cursor)
@@ -110,10 +110,10 @@ func (c Collection) Load(criteria exp.Expression, target data.Object, options ..
 	if err := c.collection.FindOne(c.context, criteriaBSON, optionsBSON).Decode(target); err != nil {
 
 		if err == mongo.ErrNoDocuments {
-			return derp.Wrap(err, location, "Unable to load object", criteria, criteriaBSON, target, derp.WithCode(http.StatusNotFound))
+			return derp.Wrap(err, location, "Loading object", criteria, criteriaBSON, target, derp.WithCode(http.StatusNotFound))
 		}
 
-		return derp.Wrap(err, location, "Unable to load object", criteria, criteriaBSON, target, derp.WithCode(http.StatusInternalServerError))
+		return derp.Wrap(err, location, "Loading object", criteria, criteriaBSON, target, derp.WithCode(http.StatusInternalServerError))
 	}
 
 	return nil
@@ -135,7 +135,7 @@ func (c Collection) Save(object data.Object, note string) error {
 		object.SetCreated(note)
 
 		if _, err := c.collection.InsertOne(c.context, object); err != nil {
-			return derp.Wrap(err, location, "Unable to insert object", object, derp.WithBadRequest())
+			return derp.Wrap(err, location, "Inserting object", object, derp.WithBadRequest())
 		}
 
 		return nil
@@ -146,13 +146,13 @@ func (c Collection) Save(object data.Object, note string) error {
 	objectID, err := primitive.ObjectIDFromHex(object.ID())
 
 	if err != nil {
-		return derp.Internal(location, "Unable to generate objectID", err, object)
+		return derp.Wrap(err, location, "Generating object ID", object, derp.WithCode(http.StatusInternalServerError))
 	}
 
 	filter := bson.M{"_id": objectID}
 
 	if _, err := c.collection.ReplaceOne(c.context, filter, object); err != nil {
-		return derp.Wrap(err, location, "Unable to replace object", filter, object, derp.WithBadRequest())
+		return derp.Wrap(err, location, "Replacing object", filter, object, derp.WithBadRequest())
 	}
 
 	return nil
@@ -166,14 +166,14 @@ func (c Collection) Delete(object data.Object, note string) error {
 	defer c.reportIfSlow(location, startTimer(), object.ID())
 
 	if object.IsNew() {
-		return derp.BadRequest(location, "Unable to delete a new object", object, note)
+		return derp.BadRequest(location, "Deleting unsaved object", object, note)
 	}
 
 	// Use virtual delete to mark this object as deleted.
 	object.SetDeleted(note)
 
 	if err := c.Save(object, note); err != nil {
-		return derp.Wrap(err, location, "Unable to perform virtual delete", object, derp.WithCode(http.StatusInternalServerError))
+		return derp.Wrap(err, location, "Performing virtual delete", object, derp.WithCode(http.StatusInternalServerError))
 	}
 
 	return nil
@@ -188,7 +188,7 @@ func (c Collection) HardDelete(criteria exp.Expression) error {
 	defer c.reportIfSlow(location, startTimer(), criteriaBSON)
 
 	if _, err := c.collection.DeleteMany(c.context, criteriaBSON); err != nil {
-		return derp.Wrap(err, location, "Unable to hard delete object", criteria)
+		return derp.Wrap(err, location, "Hard-deleting object", criteria)
 	}
 
 	return nil

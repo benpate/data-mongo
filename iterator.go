@@ -2,6 +2,7 @@ package mongodb
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/benpate/derp"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -52,12 +53,14 @@ func (iterator Iterator) Next(output any) bool {
 // Close closes the wrapped Cursor.  A cursor-less iterator has nothing to close.
 func (iterator Iterator) Close() error {
 
+	const location = "data-mongo.Iterator.Close"
+
 	if iterator.Cursor == nil {
 		return nil
 	}
 
 	if err := iterator.Cursor.Close(iterator.Context); err != nil {
-		return derp.Internal("mongodb.Iterator.Close", err.Error())
+		return derp.Wrap(err, location, "Closing cursor", derp.WithCode(http.StatusInternalServerError))
 	}
 
 	return nil
