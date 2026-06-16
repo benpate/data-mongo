@@ -34,7 +34,8 @@ func New(uri string, database string, opt *options.ClientOptions) (Server, error
 	client, err := mongo.Connect(context.Background(), opt.ApplyURI(uri))
 
 	if err != nil {
-		return Server{}, derp.Wrap(err, location, "Unable to connect to mongodb server", uri, database)
+		// The connection URI is deliberately omitted; it can carry credentials.
+		return Server{}, derp.Wrap(err, location, "Unable to connect to mongodb server", database)
 	}
 
 	// Return a wrapped "data.Server" value
