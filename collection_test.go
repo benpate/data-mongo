@@ -182,6 +182,41 @@ func TestCollection_Count(t *testing.T) {
 	assert.Equal(t, int64(0), count)
 }
 
+// MaxRows caps the count via CountOptions.Limit.
+func TestCollection_Count_MaxRows(t *testing.T) {
+
+	collection := getTestCollection(t)
+	seedPeople(t, collection,
+		newTestPerson("John Connor", 20),
+		newTestPerson("Sarah Connor", 45),
+		newTestPerson("Kyle Reese", 30),
+	)
+
+	count, err := collection.Count(exp.All(), option.MaxRows(2))
+	require.NoError(t, err)
+	assert.Equal(t, int64(2), count)
+}
+
+// CaseSensitive controls whether string criteria match case via the collation.
+func TestCollection_Count_CaseSensitive(t *testing.T) {
+
+	collection := getTestCollection(t)
+	seedPeople(t, collection,
+		newTestPerson("john", 20),
+		newTestPerson("JOHN", 45),
+	)
+
+	// Case-insensitive: both rows match "john".
+	count, err := collection.Count(exp.Equal("name", "john"), option.CaseSensitive(false))
+	require.NoError(t, err)
+	assert.Equal(t, int64(2), count)
+
+	// Case-sensitive: only the exact-case row matches.
+	count, err = collection.Count(exp.Equal("name", "john"), option.CaseSensitive(true))
+	require.NoError(t, err)
+	assert.Equal(t, int64(1), count)
+}
+
 /******************************************
  * Query()
  ******************************************/

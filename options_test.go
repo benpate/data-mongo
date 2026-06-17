@@ -148,6 +148,56 @@ func TestFindOneOptions_IgnoresUnsupported(t *testing.T) {
 }
 
 /******************************************
+ * countOptions()
+ ******************************************/
+
+func TestCountOptions_Empty(t *testing.T) {
+	assert.Nil(t, countOptions())
+}
+
+func TestCountOptions_MaxRows(t *testing.T) {
+	result := countOptions(option.MaxRows(25))
+
+	require.NotNil(t, result)
+	require.NotNil(t, result.Limit)
+	assert.Equal(t, int64(25), *result.Limit)
+}
+
+// A MaxRows value of zero (or less) means "no limit", so Limit stays unset.
+func TestCountOptions_MaxRowsZero(t *testing.T) {
+	result := countOptions(option.MaxRows(0))
+
+	require.NotNil(t, result)
+	assert.Nil(t, result.Limit)
+}
+
+func TestCountOptions_CaseSensitive(t *testing.T) {
+	result := countOptions(option.CaseSensitive(true))
+
+	require.NotNil(t, result)
+	require.NotNil(t, result.Collation)
+	assert.Equal(t, 3, result.Collation.Strength)
+}
+
+func TestCountOptions_CaseInsensitive(t *testing.T) {
+	result := countOptions(option.CaseSensitive(false))
+
+	require.NotNil(t, result)
+	require.NotNil(t, result.Collation)
+	assert.Equal(t, 2, result.Collation.Strength)
+}
+
+// Options that have no meaning for a count (Fields, Sort) are ignored without
+// affecting the Limit or Collation.
+func TestCountOptions_IgnoresUnsupported(t *testing.T) {
+	result := countOptions(option.Fields("name"), option.SortAsc("age"))
+
+	require.NotNil(t, result)
+	assert.Nil(t, result.Limit)
+	assert.Nil(t, result.Collation)
+}
+
+/******************************************
  * sortDirection()
  ******************************************/
 

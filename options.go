@@ -100,6 +100,46 @@ func findOneOptions(options ...dataOption.Option) *mongoOptions.FindOneOptions {
 	return result
 }
 
+// countOptions translates the standard data options that are meaningful to a
+// count into mongodb CountOptions.  Only MaxRows (Limit) and CaseSensitive
+// (Collation) affect a count; Fields and Sort are intentionally ignored.
+func countOptions(options ...dataOption.Option) *mongoOptions.CountOptions {
+
+	if len(options) == 0 {
+		return nil
+	}
+
+	result := mongoOptions.Count()
+
+	for _, option := range options {
+
+		switch opt := option.(type) {
+
+		case dataOption.MaxRowsOption:
+			if opt > 0 {
+				result.SetLimit(opt.MaxRows())
+			}
+
+		case dataOption.CaseSensitiveOption:
+
+			if opt.CaseSensitive() {
+				result.SetCollation(&mongoOptions.Collation{
+					Locale:   "en",
+					Strength: 3,
+				})
+				continue
+			}
+
+			result.SetCollation(&mongoOptions.Collation{
+				Locale:   "en",
+				Strength: 2,
+			})
+		}
+	}
+
+	return result
+}
+
 func sortDirection(direction string) int {
 	if direction == dataOption.SortDirectionDescending {
 		return -1

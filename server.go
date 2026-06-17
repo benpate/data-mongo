@@ -30,6 +30,11 @@ func New(uri string, database string, opt *options.ClientOptions) (Server, error
 
 	const location = "data-mongo.Server.New"
 
+	// Guard against a nil options value, which would panic in ApplyURI below.
+	if opt == nil {
+		opt = options.Client()
+	}
+
 	// Connect to the server
 	client, err := mongo.Connect(context.Background(), opt.ApplyURI(uri))
 

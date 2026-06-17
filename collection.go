@@ -35,17 +35,14 @@ func (c Collection) Context() context.Context {
 }
 
 // Count returns the number of records in the collection that match the provided criteria.
-func (c Collection) Count(criteria exp.Expression, _ ...option.Option) (int64, error) {
+func (c Collection) Count(criteria exp.Expression, options ...option.Option) (int64, error) {
 
 	const location = "data-mongo.Collection.Count"
-
-	// TODO: LOW: Add options to this function
-	// https://pkg.go.dev/go.mongodb.org/mongo-driver/mongo/options#CountOptions
 
 	criteriaBSON := ExpressionToBSON(criteria)
 	defer c.reportIfSlow(location, startTimer(), criteriaBSON)
 
-	count, err := c.collection.CountDocuments(c.context, criteriaBSON)
+	count, err := c.collection.CountDocuments(c.context, criteriaBSON, countOptions(options...))
 
 	if err != nil {
 		return 0, derp.Wrap(err, location, "Counting objects", criteriaBSON, derp.WithCode(http.StatusInternalServerError))
