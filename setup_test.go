@@ -79,7 +79,6 @@ func getTestCollection(t *testing.T) Collection {
 type testPerson struct {
 	PersonID        primitive.ObjectID `bson:"_id"`
 	Name            string             `bson:"name"`
-	Email           string             `bson:"email"`
 	Age             int                `bson:"age"`
 	journal.Journal `bson:"journal"`
 }
