@@ -28,7 +28,7 @@ type Server struct {
 // cluster, along with the name of the database to be used for all transactions.
 func New(uri string, database string, opt *options.ClientOptions) (Server, error) {
 
-	const location = "data.mongodb.New"
+	const location = "data-mongo.Server.New"
 
 	// Connect to the server
 	client, err := mongo.Connect(context.Background(), opt.ApplyURI(uri))
@@ -78,7 +78,7 @@ func (server Server) Session(ctx context.Context) (data.Session, error) {
 // to be a replica set or mongos.
 func (server Server) WithTransaction(ctx context.Context, fn data.TransactionCallbackFunc) (any, error) {
 
-	const location = "data-mongo.server.WithTransaction"
+	const location = "data-mongo.Server.WithTransaction"
 
 	sessionOptions := options.Session().
 		SetCausalConsistency(true).
