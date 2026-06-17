@@ -27,31 +27,13 @@ func findOptions(options ...dataOption.Option) *mongoOptions.FindOptions {
 			}
 
 		case dataOption.FieldsOption:
-			fields := opt.Fields()
-			projection := make(bson.D, 0, len(fields))
-			for _, field := range fields {
-				if field != "" {
-					projection = append(projection, bson.E{Key: field, Value: 1})
-				}
-			}
-			result.SetProjection(projection)
+			result.SetProjection(fieldsProjection(opt.Fields()))
 
 		case dataOption.SortOption:
 			result.SetSort(bson.D{{Key: opt.FieldName, Value: sortDirection(opt.Direction)}})
 
 		case dataOption.CaseSensitiveOption:
-
-			if opt.CaseSensitive() {
-				result.SetCollation(&mongoOptions.Collation{
-					Locale:   "en",
-					Strength: 3,
-				})
-			} else {
-				result.SetCollation(&mongoOptions.Collation{
-					Locale:   "en",
-					Strength: 2,
-				})
-			}
+			result.SetCollation(caseCollation(opt.CaseSensitive()))
 		}
 	}
 
@@ -71,29 +53,10 @@ func findOneOptions(options ...dataOption.Option) *mongoOptions.FindOneOptions {
 		switch opt := option.(type) {
 
 		case dataOption.FieldsOption:
-			fields := opt.Fields()
-			projection := make(bson.D, 0, len(fields))
-			for _, field := range fields {
-				if field != "" {
-					projection = append(projection, bson.E{Key: field, Value: 1})
-				}
-			}
-			result.SetProjection(projection)
+			result.SetProjection(fieldsProjection(opt.Fields()))
 
 		case dataOption.CaseSensitiveOption:
-
-			if opt.CaseSensitive() {
-				result.SetCollation(&mongoOptions.Collation{
-					Locale:   "en",
-					Strength: 3,
-				})
-				continue
-			}
-
-			result.SetCollation(&mongoOptions.Collation{
-				Locale:   "en",
-				Strength: 2,
-			})
+			result.SetCollation(caseCollation(opt.CaseSensitive()))
 		}
 	}
 
@@ -121,23 +84,41 @@ func countOptions(options ...dataOption.Option) *mongoOptions.CountOptions {
 			}
 
 		case dataOption.CaseSensitiveOption:
-
-			if opt.CaseSensitive() {
-				result.SetCollation(&mongoOptions.Collation{
-					Locale:   "en",
-					Strength: 3,
-				})
-				continue
-			}
-
-			result.SetCollation(&mongoOptions.Collation{
-				Locale:   "en",
-				Strength: 2,
-			})
+			result.SetCollation(caseCollation(opt.CaseSensitive()))
 		}
 	}
 
 	return result
+}
+
+// caseCollation returns the mongodb Collation implementing the given case
+// sensitivity: Strength 3 is case-sensitive, Strength 2 is case-insensitive.
+func caseCollation(caseSensitive bool) *mongoOptions.Collation {
+
+	strength := 2
+	if caseSensitive {
+		strength = 3
+	}
+
+	return &mongoOptions.Collation{
+		Locale:   "en",
+		Strength: strength,
+	}
+}
+
+// fieldsProjection builds a mongodb projection including the named fields,
+// skipping any empty field names.
+func fieldsProjection(fields []string) bson.D {
+
+	projection := make(bson.D, 0, len(fields))
+
+	for _, field := range fields {
+		if field != "" {
+			projection = append(projection, bson.E{Key: field, Value: 1})
+		}
+	}
+
+	return projection
 }
 
 func sortDirection(direction string) int {
