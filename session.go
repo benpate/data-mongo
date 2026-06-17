@@ -45,7 +45,7 @@ func (s Session) Close() {
 	// Intentionally empty: there are no per-session resources to release.
 }
 
-// Mongo returns the underlying mongodb client for libraries that need to bypass this abstraction.
+// Mongo returns the underlying mongodb database for libraries that need to bypass this abstraction.
 func (s Session) Mongo() *mongo.Database {
 	return s.database
 }
