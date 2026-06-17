@@ -67,7 +67,7 @@ func (c Collection) Query(target any, criteria exp.Expression, options ...option
 	}
 
 	if err := cursor.All(c.context, target); err != nil {
-		return derp.Wrap(err, location, "Unmarshaling database objects", target, criteriaBSON, options)
+		return derp.Wrap(err, location, "Unmarshaling database objects", criteriaBSON, options)
 	}
 
 	return nil
@@ -107,10 +107,10 @@ func (c Collection) Load(criteria exp.Expression, target data.Object, options ..
 	if err := c.collection.FindOne(c.context, criteriaBSON, optionsBSON).Decode(target); err != nil {
 
 		if err == mongo.ErrNoDocuments {
-			return derp.Wrap(err, location, "Loading object", criteria, criteriaBSON, target, derp.WithCode(http.StatusNotFound))
+			return derp.Wrap(err, location, "Loading object", criteria, criteriaBSON, target.ID(), derp.WithCode(http.StatusNotFound))
 		}
 
-		return derp.Wrap(err, location, "Loading object", criteria, criteriaBSON, target, derp.WithCode(http.StatusInternalServerError))
+		return derp.Wrap(err, location, "Loading object", criteria, criteriaBSON, target.ID(), derp.WithCode(http.StatusInternalServerError))
 	}
 
 	return nil
@@ -132,7 +132,7 @@ func (c Collection) Save(object data.Object, note string) error {
 		object.SetCreated(note)
 
 		if _, err := c.collection.InsertOne(c.context, object); err != nil {
-			return derp.Wrap(err, location, "Inserting object", object, derp.WithBadRequest())
+			return derp.Wrap(err, location, "Inserting object", object.ID(), derp.WithBadRequest())
 		}
 
 		return nil
@@ -143,13 +143,13 @@ func (c Collection) Save(object data.Object, note string) error {
 	objectID, err := primitive.ObjectIDFromHex(object.ID())
 
 	if err != nil {
-		return derp.Wrap(err, location, "Generating object ID", object, derp.WithCode(http.StatusInternalServerError))
+		return derp.Wrap(err, location, "Generating object ID", object.ID(), derp.WithCode(http.StatusInternalServerError))
 	}
 
 	filter := bson.M{"_id": objectID}
 
 	if _, err := c.collection.ReplaceOne(c.context, filter, object); err != nil {
-		return derp.Wrap(err, location, "Replacing object", filter, object, derp.WithBadRequest())
+		return derp.Wrap(err, location, "Replacing object", filter, object.ID(), derp.WithBadRequest())
 	}
 
 	return nil
@@ -163,14 +163,14 @@ func (c Collection) Delete(object data.Object, note string) error {
 	defer c.reportIfSlow(location, startTimer(), object.ID())
 
 	if object.IsNew() {
-		return derp.BadRequest(location, "Deleting unsaved object", object, note)
+		return derp.BadRequest(location, "Deleting unsaved object", object.ID(), note)
 	}
 
 	// Use virtual delete to mark this object as deleted.
 	object.SetDeleted(note)
 
 	if err := c.Save(object, note); err != nil {
-		return derp.Wrap(err, location, "Performing virtual delete", object, derp.WithCode(http.StatusInternalServerError))
+		return derp.Wrap(err, location, "Performing virtual delete", object.ID(), derp.WithCode(http.StatusInternalServerError))
 	}
 
 	return nil
