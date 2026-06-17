@@ -1,6 +1,8 @@
 package mongodb
 
 import (
+	"regexp"
+
 	"github.com/benpate/exp"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -93,19 +95,24 @@ func operatorBSON(operator string, value any) bson.M {
 	case exp.OperatorInAll:
 		return bson.M{"$all": value}
 
+	// The string-matching operators below match a literal substring, so the
+	// value is escaped with regexp.QuoteMeta.  Embedding it raw would let
+	// metacharacters change the match (a "." matching any character) and let
+	// untrusted input inject a pathological regex (ReDoS).
+
 	case exp.OperatorBeginsWith:
 		if valueString, isString := value.(string); isString {
-			return bson.M{"$regex": primitive.Regex{Pattern: "^" + valueString, Options: "i"}}
+			return bson.M{"$regex": primitive.Regex{Pattern: "^" + regexp.QuoteMeta(valueString), Options: "i"}}
 		}
 
 	case exp.OperatorContains:
 		if valueString, isString := value.(string); isString {
-			return bson.M{"$regex": primitive.Regex{Pattern: valueString, Options: "i"}}
+			return bson.M{"$regex": primitive.Regex{Pattern: regexp.QuoteMeta(valueString), Options: "i"}}
 		}
 
 	case exp.OperatorEndsWith:
 		if valueString, isString := value.(string); isString {
-			return bson.M{"$regex": primitive.Regex{Pattern: valueString + "$", Options: "i"}}
+			return bson.M{"$regex": primitive.Regex{Pattern: regexp.QuoteMeta(valueString) + "$", Options: "i"}}
 		}
 
 	case exp.OperatorExists:

@@ -272,6 +272,112 @@ func TestCollection_Query_MaxRows(t *testing.T) {
 }
 
 /******************************************
+ * Query() - Regex Operator Safety (end-to-end)
+ ******************************************/
+
+// queryNames runs a Query and returns the matched names, so the regex-safety
+// tests can assert on results concisely.
+func queryNames(t *testing.T, collection Collection, criteria exp.Expression) []string {
+	t.Helper()
+	results := make([]testPerson, 0)
+	require.NoError(t, collection.Query(&results, criteria))
+	names := make([]string, 0, len(results))
+	for _, person := range results {
+		names = append(names, person.Name)
+	}
+	return names
+}
+
+// A "." in a Contains query matches a literal dot, NOT the regex
+// "any character" wildcard.
+func TestCollection_Query_ContainsDotIsLiteral(t *testing.T) {
+
+	collection := getTestCollection(t)
+	seedPeople(t, collection,
+		newTestPerson("John", 1), // no dot
+		newTestPerson("a.b", 2),  // literal dot
+	)
+
+	// If "." were a wildcard this would match both rows.
+	names := queryNames(t, collection, exp.New("name", exp.OperatorContains, "."))
+
+	assert.ElementsMatch(t, []string{"a.b"}, names)
+}
+
+// ".*" in a Contains query matches the literal ".*", not "everything".
+func TestCollection_Query_ContainsWildcardIsLiteral(t *testing.T) {
+
+	collection := getTestCollection(t)
+	seedPeople(t, collection,
+		newTestPerson("John", 1),
+		newTestPerson("Sarah", 2),
+		newTestPerson("a.*b", 3), // literal ".*"
+	)
+
+	// Unescaped, ".*" matches every document; escaped, only the literal one.
+	names := queryNames(t, collection, exp.New("name", exp.OperatorContains, ".*"))
+
+	assert.ElementsMatch(t, []string{"a.*b"}, names)
+}
+
+// A ReDoS-style value is treated as a literal substring: it matches only the
+// row that literally contains it, never the long run of "a"s that a real
+// "(a+)+" regex would catch.
+func TestCollection_Query_RegexInjectionNeutralized(t *testing.T) {
+
+	collection := getTestCollection(t)
+	seedPeople(t, collection,
+		newTestPerson("aaaaaaaaaaaaaaaaaaaa", 1), // a real (a+)+ regex matches this
+		newTestPerson("x(a+)+y", 2),              // contains the literal payload
+	)
+
+	names := queryNames(t, collection, exp.New("name", exp.OperatorContains, "(a+)+"))
+
+	assert.ElementsMatch(t, []string{"x(a+)+y"}, names)
+}
+
+// BeginsWith anchors the literal value at the start of the string.
+func TestCollection_Query_BeginsWithIsLiteral(t *testing.T) {
+
+	collection := getTestCollection(t)
+	seedPeople(t, collection,
+		newTestPerson("a.bc", 1),  // starts with literal "a.b"
+		newTestPerson("axbc", 2),  // matches only if "." is a wildcard
+		newTestPerson("za.bc", 3), // contains "a.b" but does not start with it
+	)
+
+	names := queryNames(t, collection, exp.New("name", exp.OperatorBeginsWith, "a.b"))
+
+	assert.ElementsMatch(t, []string{"a.bc"}, names)
+}
+
+// EndsWith anchors the literal value at the end of the string.
+func TestCollection_Query_EndsWithIsLiteral(t *testing.T) {
+
+	collection := getTestCollection(t)
+	seedPeople(t, collection,
+		newTestPerson("xa.b", 1), // ends with literal "a.b"
+		newTestPerson("xaxb", 2), // matches only if "." is a wildcard
+		newTestPerson("a.bx", 3), // contains "a.b" but does not end with it
+	)
+
+	names := queryNames(t, collection, exp.New("name", exp.OperatorEndsWith, "a.b"))
+
+	assert.ElementsMatch(t, []string{"xa.b"}, names)
+}
+
+// Escaping does not break case-insensitivity (the "i" option is preserved).
+func TestCollection_Query_StringMatchCaseInsensitive(t *testing.T) {
+
+	collection := getTestCollection(t)
+	seedPeople(t, collection, newTestPerson("John Connor", 1))
+
+	names := queryNames(t, collection, exp.New("name", exp.OperatorContains, "CONNOR"))
+
+	assert.ElementsMatch(t, []string{"John Connor"}, names)
+}
+
+/******************************************
  * Delete() - Virtual
  ******************************************/
 

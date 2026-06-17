@@ -2,6 +2,7 @@ package mongodb
 
 import (
 	"encoding/json"
+	"regexp"
 	"testing"
 
 	"github.com/benpate/exp"
@@ -133,6 +134,38 @@ func TestOperatorBSON_StringMatching(t *testing.T) {
 	assert.Equal(t,
 		bson.M{"$regex": primitive.Regex{Pattern: "Connor$", Options: "i"}},
 		operatorBSON(exp.OperatorEndsWith, "Connor"))
+}
+
+// Regex metacharacters in the value are escaped so the operators match a literal
+// substring and untrusted input cannot inject a pathological pattern (ReDoS).
+func TestOperatorBSON_StringMatchingEscapesMetacharacters(t *testing.T) {
+
+	// check confirms the value is embedded as its QuoteMeta-escaped form, with
+	// the operator's anchor applied OUTSIDE the escaped value.
+	check := func(operator string, value string, expectedPattern string) {
+		expected := bson.M{"$regex": primitive.Regex{Pattern: expectedPattern, Options: "i"}}
+		assert.Equal(t, expected, operatorBSON(operator, value), "operator=%s value=%q", operator, value)
+	}
+
+	// A representative spread of regex metacharacters, plus injection payloads.
+	values := []string{
+		"a.b", "a*b", "a+b", "(a)", "[a-z]", "{1,9}", "a|b", "^a", "a$",
+		"a?b", `a\b`, ".*", "(a+)+$", "(.*)+", `\d{10}`, "100% off",
+	}
+
+	for _, value := range values {
+		check(exp.OperatorContains, value, regexp.QuoteMeta(value))
+		check(exp.OperatorBeginsWith, value, "^"+regexp.QuoteMeta(value))
+		check(exp.OperatorEndsWith, value, regexp.QuoteMeta(value)+"$")
+	}
+
+	// Spot-check one result spelled out, so the test documents the actual effect.
+	check(exp.OperatorContains, "a.b", `a\.b`)
+	check(exp.OperatorBeginsWith, "a.b", `^a\.b`)
+	check(exp.OperatorEndsWith, "a.b", `a\.b$`)
+
+	// A value with no metacharacters is unchanged (regression guard).
+	check(exp.OperatorContains, "Connor", "Connor")
 }
 
 // The string-matching operators only apply to string values; anything else
