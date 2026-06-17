@@ -10,40 +10,40 @@ import (
 
 // Iterator wraps the mongodb Cursor object
 type Iterator struct {
-	Context context.Context
-	Cursor  *mongo.Cursor
+	context context.Context
+	cursor  *mongo.Cursor
 }
 
 // NewIterator returns a fully populated Iterator object
-func NewIterator(context context.Context, cursor *mongo.Cursor) Iterator {
+func NewIterator(ctx context.Context, cursor *mongo.Cursor) Iterator {
 	return Iterator{
-		Context: context,
-		Cursor:  cursor,
+		context: ctx,
+		cursor:  cursor,
 	}
 }
 
 // Count returns the total number of records contained by this iterator.  A
 // cursor-less iterator (for example, one returned alongside an error) is empty.
 func (iterator Iterator) Count() int {
-	if iterator.Cursor == nil {
+	if iterator.cursor == nil {
 		return 0
 	}
-	return iterator.Cursor.RemainingBatchLength()
+	return iterator.cursor.RemainingBatchLength()
 }
 
 // Next populates the next value from the wrapped Cursor, or returns FALSE.  A
 // cursor-less iterator is always exhausted.
 func (iterator Iterator) Next(output any) bool {
 
-	if iterator.Cursor == nil {
+	if iterator.cursor == nil {
 		return false
 	}
 
-	if !iterator.Cursor.Next(iterator.Context) {
+	if !iterator.cursor.Next(iterator.context) {
 		return false
 	}
 
-	if err := iterator.Cursor.Decode(output); err != nil {
+	if err := iterator.cursor.Decode(output); err != nil {
 		return false
 	}
 
@@ -55,11 +55,11 @@ func (iterator Iterator) Close() error {
 
 	const location = "data-mongo.Iterator.Close"
 
-	if iterator.Cursor == nil {
+	if iterator.cursor == nil {
 		return nil
 	}
 
-	if err := iterator.Cursor.Close(iterator.Context); err != nil {
+	if err := iterator.cursor.Close(iterator.context); err != nil {
 		return derp.Wrap(err, location, "Closing cursor", derp.WithCode(http.StatusInternalServerError))
 	}
 
@@ -68,8 +68,8 @@ func (iterator Iterator) Close() error {
 
 // Error returns any error encountered while iterating the wrapped Cursor.
 func (iterator Iterator) Error() error {
-	if iterator.Cursor == nil {
+	if iterator.cursor == nil {
 		return nil
 	}
-	return iterator.Cursor.Err()
+	return iterator.cursor.Err()
 }

@@ -21,8 +21,8 @@ func TestNewIterator(t *testing.T) {
 
 	iterator := NewIterator(ctx, cursor)
 
-	assert.Equal(t, ctx, iterator.Context)
-	assert.Same(t, cursor, iterator.Cursor)
+	assert.Equal(t, ctx, iterator.context)
+	assert.Same(t, cursor, iterator.cursor)
 }
 
 // A cursor-less iterator (the zero value, or one returned alongside an error)
