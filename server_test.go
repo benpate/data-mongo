@@ -28,6 +28,20 @@ func TestNew_InvalidURI(t *testing.T) {
 	assert.Nil(t, server.Database())
 }
 
+// A nil *options.ClientOptions must not panic; New falls back to a default.
+func TestNew_NilOptions(t *testing.T) {
+
+	var server Server
+	var err error
+
+	require.NotPanics(t, func() {
+		server, err = New("mongodb://localhost:27017", "test", nil)
+	})
+
+	require.NoError(t, err)
+	assert.NotNil(t, server.Client())
+}
+
 func TestNew_Success(t *testing.T) {
 
 	server := getTestServer(t)
