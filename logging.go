@@ -28,6 +28,8 @@ func startTimer() int64 {
 	return 0
 }
 
+// isTimeoutExceeded reports whether the elapsed time since startTime has passed
+// the configured slow-query threshold.  It is always false when logging is off.
 func isTimeoutExceeded(startTime int64) bool {
 
 	threshold := logTimeout.Load()

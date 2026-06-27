@@ -6,6 +6,8 @@ import (
 	mongoOptions "go.mongodb.org/mongo-driver/mongo/options"
 )
 
+// findOptions translates the standard data options into mongodb FindOptions for
+// a multi-row query.  It returns nil when no options are provided.
 func findOptions(options ...dataOption.Option) *mongoOptions.FindOptions {
 
 	if len(options) == 0 {
@@ -40,6 +42,8 @@ func findOptions(options ...dataOption.Option) *mongoOptions.FindOptions {
 	return result
 }
 
+// findOneOptions translates the standard data options into mongodb FindOneOptions.
+// Only Fields and CaseSensitive are meaningful when loading a single row.
 func findOneOptions(options ...dataOption.Option) *mongoOptions.FindOneOptions {
 
 	if len(options) == 0 {
@@ -121,6 +125,8 @@ func fieldsProjection(fields []string) bson.D {
 	return projection
 }
 
+// sortDirection maps a data sort direction onto the mongodb convention: -1 for
+// descending, 1 for ascending (the default).
 func sortDirection(direction string) int {
 	if direction == dataOption.SortDirectionDescending {
 		return -1
