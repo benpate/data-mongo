@@ -212,7 +212,7 @@ func (c Collection) timeoutError(location string, startTime int64, data ...any) 
 		"collection: " + c.collection.Name(),
 	}, data...)
 
-	derp.Report(derp.TimeoutError(
+	derp.Report(derp.Timeout(
 		location,
 		"Timeout exceeded",
 		data...,
