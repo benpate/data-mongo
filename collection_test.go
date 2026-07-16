@@ -110,6 +110,28 @@ func TestCollection_Save_InvalidObjectID(t *testing.T) {
 	require.Error(t, err)
 }
 
+// wrapWriteError maps a unique-index violation (E11000) to a (409) Conflict so callers can detect
+// it with derp.IsConflict without importing the mongo driver, while every other write error stays a
+// (400) Bad Request. This is DB-free: it exercises the mapping directly on synthetic write errors.
+func TestWrapWriteError(t *testing.T) {
+
+	// A duplicate-key error becomes a Conflict.
+	duplicate := mongo.WriteException{
+		WriteErrors: mongo.WriteErrors{
+			{Code: 11000, Message: "E11000 duplicate key error"},
+		},
+	}
+	require.Equal(t, http.StatusConflict, derp.ErrorCode(wrapWriteError(duplicate, "test", "insert")))
+
+	// Any other write error stays a Bad Request.
+	other := mongo.WriteException{
+		WriteErrors: mongo.WriteErrors{
+			{Code: 121, Message: "document failed validation"},
+		},
+	}
+	require.Equal(t, http.StatusBadRequest, derp.ErrorCode(wrapWriteError(other, "test", "insert")))
+}
+
 /******************************************
  * Load()
  ******************************************/

@@ -132,7 +132,7 @@ func (c Collection) Save(object data.Object, note string) error {
 		object.SetCreated(note)
 
 		if _, err := c.collection.InsertOne(c.context, object); err != nil {
-			return derp.Wrap(err, location, "Inserting object", object.ID(), derp.WithBadRequest())
+			return wrapWriteError(err, location, "Inserting object", object.ID())
 		}
 
 		return nil
@@ -149,10 +149,23 @@ func (c Collection) Save(object data.Object, note string) error {
 	filter := bson.M{"_id": objectID}
 
 	if _, err := c.collection.ReplaceOne(c.context, filter, object); err != nil {
-		return derp.Wrap(err, location, "Replacing object", filter, object.ID(), derp.WithBadRequest())
+		return wrapWriteError(err, location, "Replacing object", filter, object.ID())
 	}
 
 	return nil
+}
+
+// wrapWriteError wraps an error from a write (InsertOne/ReplaceOne) with the appropriate HTTP-style code.  
+func wrapWriteError(err error, location string, message string, details ...any) error {
+
+	// A unique-index violation (MongoDB E11000) becomes a (409) Conflict, so callers can detect
+	// it with derp.IsConflict WITHOUT importing the mongo driver.
+	if mongo.IsDuplicateKeyError(err) {
+		return derp.Wrap(err, location, message, append(details, derp.WithConflict())...)
+	}
+
+	// All other errors are returned as (400) BadRequest
+	return derp.Wrap(err, location, message, append(details, derp.WithBadRequest())...)
 }
 
 // Delete removes a single object from the database, using a "virtual delete"
