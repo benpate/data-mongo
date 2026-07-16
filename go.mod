@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	github.com/benpate/data v0.32.0
-	github.com/benpate/derp v0.36.0
+	github.com/benpate/derp v0.37.0
 	github.com/benpate/exp v0.10.0
 	github.com/stretchr/testify v1.11.1
 	go.mongodb.org/mongo-driver v1.17.9
