@@ -8,7 +8,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-// ExpressionToBSON converts a data.Expression value into pure bson.
+// ExpressionToBSON converts an exp.Expression into a pure bson query filter.
 func ExpressionToBSON(criteria exp.Expression) bson.M {
 
 	switch c := criteria.(type) {
@@ -33,8 +33,12 @@ func ExpressionToBSON(criteria exp.Expression) bson.M {
 
 	case exp.AndExpression:
 
+		// An empty AND places no constraint, which is the same "match everything"
+		// filter that exp.Empty() produces.  It must be an EMPTY map and never a
+		// nil one: this function is exported, and a caller who adds a condition of
+		// their own to the result would panic on a nil map.
 		if len(c) == 0 {
-			return nil
+			return bson.M{}
 		}
 
 		array := bson.A{}
@@ -47,8 +51,9 @@ func ExpressionToBSON(criteria exp.Expression) bson.M {
 
 	case exp.OrExpression:
 
+		// Empty for the same reason as an empty AND, above.
 		if len(c) == 0 {
-			return nil
+			return bson.M{}
 		}
 
 		array := bson.A{}
@@ -63,7 +68,8 @@ func ExpressionToBSON(criteria exp.Expression) bson.M {
 	return bson.M{}
 }
 
-// operatorBSON converts a standard data.Operator into the operators used by mongodb
+// operatorBSON converts one of the exp operator constants into the comparison
+// document that mongodb expects.  An unrecognized operator compares for equality.
 func operatorBSON(operator string, value any) bson.M {
 
 	switch operator {

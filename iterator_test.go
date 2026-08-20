@@ -94,6 +94,8 @@ func TestIterator_Count(t *testing.T) {
 	t.Cleanup(func() { _ = iterator.Close() })
 
 	// Count reports the remaining rows in the current batch (all 3 fit one batch).
+	// See TestRegression_IteratorCountIsBatchNotTotal for the case where they
+	// do not.
 	assert.Equal(t, 3, iterator.Count())
 }
 

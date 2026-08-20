@@ -2,6 +2,7 @@ package mongodb
 
 import (
 	"context"
+	"sync"
 	"testing"
 	"time"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/benpate/data/journal"
 	"github.com/stretchr/testify/require"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
@@ -25,6 +27,29 @@ import (
 // operation hang until it times out.
 const testMongoURI = "mongodb://localhost:27017/?directConnection=true"
 
+// mongoIsAvailable reports whether a live MongoDB answered at testMongoURI,
+// probing it exactly ONCE for the whole package run.
+//
+// Every integration test gates on this, so a machine without MongoDB pays the
+// connection timeout a single time rather than once per test.  Probing per test
+// turned a skipped suite into a two-and-a-half minute wait.
+var mongoIsAvailable = sync.OnceValue(func() error {
+
+	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(testMongoURI))
+
+	if err != nil {
+		return err
+	}
+
+	defer func() { _ = client.Disconnect(context.Background()) }()
+
+	// mongo.Connect is lazy, so Ping is what actually proves the server is up.
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	return client.Ping(ctx, readpref.Primary())
+})
+
 // getTestServer connects to a local MongoDB and returns a ready-to-use Server.
 //
 // It is the GATE for every test that needs a live database: if MongoDB is not
@@ -34,20 +59,15 @@ const testMongoURI = "mongodb://localhost:27017/?directConnection=true"
 func getTestServer(t *testing.T) Server {
 	t.Helper()
 
+	if err := mongoIsAvailable(); err != nil {
+		t.Skipf("MongoDB is not available at %s; skipping integration test (%v)", testMongoURI, err)
+	}
+
 	// A unique database name keeps parallel tests from colliding.
 	databaseName := "test_datamongo_" + primitive.NewObjectID().Hex()
 
 	server, err := New(testMongoURI, databaseName, options.Client())
 	require.NoError(t, err)
-
-	// mongo.Connect is lazy, so Ping is what actually proves the server is up.
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-
-	if err := server.Client().Ping(ctx, readpref.Primary()); err != nil {
-		_ = server.Client().Disconnect(context.Background())
-		t.Skipf("MongoDB is not available at %s; skipping integration test (%v)", testMongoURI, err)
-	}
 
 	t.Cleanup(func() {
 		_ = server.Database().Drop(context.Background())

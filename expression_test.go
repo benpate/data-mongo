@@ -74,16 +74,16 @@ func TestExpressionToBSON_FullText(t *testing.T) {
 	assert.Equal(t, bson.M{"$text": bson.M{"$search": "hello world"}}, result)
 }
 
-// An empty AND expression (exp.All) produces a nil filter, which the driver
+// An empty AND expression (exp.All) produces an empty filter, which the driver
 // treats as "match everything".
 func TestExpressionToBSON_EmptyAnd(t *testing.T) {
-	assert.Nil(t, ExpressionToBSON(exp.And()))
-	assert.Nil(t, ExpressionToBSON(exp.All()))
+	assert.Equal(t, bson.M{}, ExpressionToBSON(exp.And()))
+	assert.Equal(t, bson.M{}, ExpressionToBSON(exp.All()))
 }
 
-// An empty OR expression also produces a nil filter.
+// An empty OR expression also produces an empty filter.
 func TestExpressionToBSON_EmptyOr(t *testing.T) {
-	assert.Nil(t, ExpressionToBSON(exp.Or()))
+	assert.Equal(t, bson.M{}, ExpressionToBSON(exp.Or()))
 }
 
 // An unrecognized expression type falls through to an empty filter.

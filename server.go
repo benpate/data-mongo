@@ -1,7 +1,3 @@
-// Package mongodb implements the benpate/data interfaces (Server, Session,
-// Collection, Iterator) on top of the official MongoDB Go driver, so that
-// application code can perform CRUD operations against MongoDB without
-// depending on the driver directly.
 package mongodb
 
 import (
@@ -49,6 +45,7 @@ func New(uri string, database string, opt *options.ClientOptions) (Server, error
 		database: client.Database(database),
 	}
 
+	// Connected, more or less. mongo.Connect is lazy; Ping is what proves it.
 	return result, nil
 }
 

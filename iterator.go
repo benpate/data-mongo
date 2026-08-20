@@ -12,19 +12,21 @@ import (
 type Iterator struct {
 	context context.Context
 	cursor  *mongo.Cursor
+	err     error
 }
 
 // NewIterator returns a fully populated Iterator object
-func NewIterator(ctx context.Context, cursor *mongo.Cursor) Iterator {
-	return Iterator{
+func NewIterator(ctx context.Context, cursor *mongo.Cursor) *Iterator {
+	return &Iterator{
 		context: ctx,
 		cursor:  cursor,
 	}
 }
 
-// Count returns the total number of records contained by this iterator.  A
-// cursor-less iterator (for example, one returned alongside an error) is empty.
-func (iterator Iterator) Count() int {
+// Count returns the number of records remaining in the cursor's CURRENT batch,
+// which is the most the driver can report without another round trip to the
+// server.  For a result set larger than one batch this is less than the total.
+func (iterator *Iterator) Count() int {
 	if iterator.cursor == nil {
 		return 0
 	}
@@ -33,7 +35,9 @@ func (iterator Iterator) Count() int {
 
 // Next populates the next value from the wrapped Cursor, or returns FALSE.  A
 // cursor-less iterator is always exhausted.
-func (iterator Iterator) Next(output any) bool {
+func (iterator *Iterator) Next(output any) bool {
+
+	const location = "data-mongo.Iterator.Next"
 
 	if iterator.cursor == nil {
 		return false
@@ -43,7 +47,12 @@ func (iterator Iterator) Next(output any) bool {
 		return false
 	}
 
+	// RULE: A record that will not decode must be REPORTED, not skipped.  Cursor
+	// errors reach the caller through cursor.Err(), but a decode failure happens
+	// on this side of the wire, so it is recorded here or it is lost -- and a
+	// silent short read looks exactly like a clean end of iteration.
 	if err := iterator.cursor.Decode(output); err != nil {
+		iterator.err = derp.Wrap(err, location, "Decoding database record", derp.WithCode(http.StatusInternalServerError))
 		return false
 	}
 
@@ -51,7 +60,7 @@ func (iterator Iterator) Next(output any) bool {
 }
 
 // Close closes the wrapped Cursor.  A cursor-less iterator has nothing to close.
-func (iterator Iterator) Close() error {
+func (iterator *Iterator) Close() error {
 
 	const location = "data-mongo.Iterator.Close"
 
@@ -63,13 +72,22 @@ func (iterator Iterator) Close() error {
 		return derp.Wrap(err, location, "Closing cursor", derp.WithCode(http.StatusInternalServerError))
 	}
 
+	// Nothing left to see here
 	return nil
 }
 
-// Error returns any error encountered while iterating the wrapped Cursor.
-func (iterator Iterator) Error() error {
+// Error returns the first error encountered while iterating, whether it came
+// from decoding a record or from the wrapped Cursor itself.
+func (iterator *Iterator) Error() error {
+
+	// A decode error is always the first one: Next stops iterating on it.
+	if iterator.err != nil {
+		return iterator.err
+	}
+
 	if iterator.cursor == nil {
 		return nil
 	}
+
 	return iterator.cursor.Err()
 }

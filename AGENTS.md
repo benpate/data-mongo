@@ -2,6 +2,14 @@
 
 - **String-match operators are escaped against regex injection.** `BeginsWith` / `Contains` / `EndsWith` compile to MongoDB `$regex`, so the user value is run through `regexp.QuoteMeta` before embedding. Removing that escaping would let input inject metacharacters (a `.` matching anything) or a pathological pattern (ReDoS). See `operatorBSON` in [expression.go](expression.go).
 
+- **An empty expression translates to an EMPTY `bson.M`, never a nil one.** `exp.All()`, `exp.And()`, `exp.Or()`, and `exp.Empty()` all mean "match everything" and all return a writable map. `ExpressionToBSON` is exported, and returning nil for the empty cases meant that a caller who added a condition of their own to the result panicked with "assignment to entry in nil map" — but only when the criteria happened to be empty. `exp.And()` avoids the identical trap for the same reason; see the RULE comment there.
+
+- **A type-mismatched value fails CLOSED.** A number given to `CONTAINS`, a string given to `EXISTS`, and friends fall through to an empty comparison, which MongoDB matches against *no* records. Malformed input must narrow a query, never widen it — the sibling `exp-builder` package (BUG-131) depends on this. Do not "tidy" the fall-through into the `default` branch's `$eq`, and do not drop a predicate whose comparison is empty: either change makes it match everything.
+
+- **`Iterator.Count()` reports the current BATCH, not the total.** A cursor only knows what the server already sent it, so a result set larger than one batch (101 documents by default) reports low. This is a knowing deviation from the `data.Iterator` interface, which specifies the total and which `data-mock` honors. Use `Collection.Count` for a real total.
+
+- **`Iterator.Next` records decode errors; always check `Error()` after the loop.** A record that will not decode into the caller's target ends iteration, and without checking `Error()` a short read looks exactly like a complete one. `Iterator` uses POINTER receivers for this reason — `Next` has to write the error where `Error` can read it.
+
 - **`Delete` is a *virtual* delete; `HardDelete` is physical.** `Delete` marks the object deleted and re-saves it (the row stays in the database); only `HardDelete` issues a real `DeleteMany`. Don't assume `Delete` removes data.
 
 - **`Session.Close` is intentionally a no-op.** Connections are owned by the long-lived `*mongo.Client` pool, not the session. Per-request cleanup happens by cancelling the `context.Context` passed to `Server.Session`, not by calling `Close`. The method exists only to satisfy the interface.

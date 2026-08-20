@@ -70,6 +70,7 @@ func (c Collection) Query(target any, criteria exp.Expression, options ...option
 		return derp.Wrap(err, location, "Unmarshaling database objects", criteriaBSON, options)
 	}
 
+	// Everything you were looking for, and nothing you weren't
 	return nil
 }
 
@@ -152,10 +153,11 @@ func (c Collection) Save(object data.Object, note string) error {
 		return wrapWriteError(err, location, "Replacing object", filter, object.ID())
 	}
 
+	// Written in stone. Well, in BSON.
 	return nil
 }
 
-// wrapWriteError wraps an error from a write (InsertOne/ReplaceOne) with the appropriate HTTP-style code.  
+// wrapWriteError wraps an error from a write (InsertOne/ReplaceOne) with the appropriate HTTP-style code.
 func wrapWriteError(err error, location string, message string, details ...any) error {
 
 	// A unique-index violation (MongoDB E11000) becomes a (409) Conflict, so callers can detect
@@ -186,6 +188,7 @@ func (c Collection) Delete(object data.Object, note string) error {
 		return derp.Wrap(err, location, "Performing virtual delete", object.ID(), derp.WithCode(http.StatusInternalServerError))
 	}
 
+	// It's not gone, it's just resting
 	return nil
 }
 
@@ -201,6 +204,7 @@ func (c Collection) HardDelete(criteria exp.Expression) error {
 		return derp.Wrap(err, location, "Hard-deleting object", criteria)
 	}
 
+	// THIS one is gone
 	return nil
 }
 
@@ -218,6 +222,8 @@ func (c Collection) reportIfSlow(location string, startTime int64, data ...any) 
 	}
 }
 
+// timeoutError reports a slow query, prefixing the caller's details with the
+// elapsed time and the collection name.
 func (c Collection) timeoutError(location string, startTime int64, data ...any) {
 
 	data = append([]any{
