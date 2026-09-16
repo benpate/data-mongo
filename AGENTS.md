@@ -21,3 +21,21 @@
 - **Transactions require a replica set or mongos.** `Server.WithTransaction` uses majority read/write concern and causal consistency; it will fail against a standalone `mongod`.
 
 - **Geometry values are passed through as-is.** The `GeoWithin` / `GeoIntersects` operators expect the value to already be a GeoJSON `map[string]any` — produced upstream by `exp.GeoWithin` / `exp.GeoIntersects` calling `GeoJSON()` on a `geo` shape. This package does no GeoJSON conversion of its own.
+
+## Compare driver sentinels with `errors.Is`, never `==`
+
+`Collection.Load` tests `err == mongo.ErrNoDocuments` by identity, and that decision picks **404 vs 500** for every record load in Emissary. It works today only because the driver happens to return the sentinel unwrapped; any future wrapping turns every missing record into a 500. Filed as BUG-132 and deliberately left open — no failing test can be written for it while the driver behaves. Write `errors.Is` in new code here, and treat the existing sites as latent rather than correct.
+
+## `ExpressionToBSON` must never return a nil map
+
+It is exported, so a caller may add conditions of their own to the result. An empty AND/OR (the common `exp.All()` spelling) used to return nil, and writing to it panicked with "assignment to entry in nil map" — but only for that one input shape.
+
+## The driver-compatibility harness imports BOTH mongo-driver majors
+
+`go.mongodb.org/mongo-driver` and `.../v2` are separate module paths, so [driverCompat_test.go](driverCompat_test.go) imports them side by side and diffs them in one process. It exists for the v2 upgrade (BUG-122) and pins three things: the shapes that encode to **identical bytes** under both majors, the one decode difference that matters, and the trap that motivates the whole exercise.
+
+The trap is that `ValueMarshaler` changed signature between majors — `MarshalBSONValue() (bsontype.Type, …)` became `(byte, …)`. Interfaces are satisfied structurally, so a type written for v1 does not fail to compile under v2; it silently stops being recognized and the driver encodes it with the default struct codec instead, changing the shape on disk. `TestDriverCompat_ValueMarshalerSignatureChanged` demonstrates it.
+
+The other difference is that v2 decodes a nested document into `bson.D` where v1 gave a plain `map[string]any`, which makes rosetta's `mapof.Any` accessors read as empty with no error anywhere. `BSONOptions{DefaultDocumentMap: true}` restores the v1 shape and must be set on the client when the upgrade lands. `DefaultDocumentM` is **not** equivalent — `bson.M` is a named type and fails the same assertion.
+
+The v2 dependency is test-only. It does not reach consumers of this module, because `go mod tidy` resolves test dependencies for the main module only.
