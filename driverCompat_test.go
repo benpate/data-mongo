@@ -58,11 +58,35 @@ func TestDriverCompat_Encoding(t *testing.T) {
 
 	// sameTwins encodes a pair of values that differ ONLY in the driver type they
 	// carry, because an ObjectID cannot be spelled the same way in both majors.
+	// Every value passed here must have a STABLE byte encoding -- see sameDocument.
 	sameTwins := func(name string, valueV1 any, valueV2 any) {
 		t.Helper()
 		t.Run(name, func(t *testing.T) {
 			require.Equal(t, encodeV1(t, valueV1), encodeV2(t, valueV2),
 				"v1 and v2 must write identical bytes for this shape")
+		})
+	}
+
+	// sameDocument compares a pair of values as decoded DOCUMENTS rather than as
+	// bytes. Go randomizes map iteration order, so a bson.M holding more than one
+	// key has no stable byte encoding and can only be compared for equivalence.
+	sameDocument := func(name string, valueV1 any, valueV2 any) {
+		t.Helper()
+		t.Run(name, func(t *testing.T) {
+
+			dataV1, err := bsonV1.Marshal(valueV1)
+			require.NoError(t, err)
+
+			dataV2, err := bsonV2.Marshal(valueV2)
+			require.NoError(t, err)
+
+			// Both are decoded by v1, so the resulting Go types are comparable
+			var documentV1, documentV2 map[string]any
+			require.NoError(t, bsonV1.Unmarshal(dataV1, &documentV1))
+			require.NoError(t, bsonV1.Unmarshal(dataV2, &documentV2))
+
+			require.Equal(t, documentV1, documentV2,
+				"v1 and v2 must write equivalent documents for this shape")
 		})
 	}
 
@@ -113,11 +137,15 @@ func TestDriverCompat_Encoding(t *testing.T) {
 		Revision   int64  `bson:"signature"`
 	}{CreateDate: 1, UpdateDate: 2, DeleteDate: 3, Note: "created", Revision: 4})
 
-	// The query shapes ExpressionToBSON produces
-	sameTwins("bson.M filter", bsonV1.M{"b": 1, "a": 2}, bsonV2.M{"b": 1, "a": 2})
+	// The query shapes ExpressionToBSON produces. A single-key bson.M has only one
+	// possible order, so it is byte-stable; a multi-key one is compared as a document.
 	sameTwins("bson.D sort", bsonV1.D{{Key: "createDate", Value: 1}}, bsonV2.D{{Key: "createDate", Value: 1}})
 	sameTwins("empty bson.M", bsonV1.M{}, bsonV2.M{})
+	sameTwins("single-key bson.M", bsonV1.M{"deleteDate": 0}, bsonV2.M{"deleteDate": 0})
 	sameTwins("nested operator", bsonV1.M{"parentId": bsonV1.M{"$in": bsonV1.A{1, 2}}}, bsonV2.M{"parentId": bsonV2.M{"$in": bsonV2.A{1, 2}}})
+
+	sameDocument("multi-key bson.M filter", bsonV1.M{"b": 1, "a": 2}, bsonV2.M{"b": 1, "a": 2})
+	sameDocument("multi-key $and", bsonV1.M{"parentId": 1, "type": "User", "deleteDate": 0}, bsonV2.M{"parentId": 1, "type": "User", "deleteDate": 0})
 
 	objectIDV1, err := primitiveV1.ObjectIDFromHex("507f1f77bcf86cd799439011")
 	require.NoError(t, err)
