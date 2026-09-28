@@ -10,6 +10,7 @@
 
 - **`Iterator.Next` records decode errors; always check `Error()` after the loop.** A record that will not decode into the caller's target ends iteration, and without checking `Error()` a short read looks exactly like a complete one. `Iterator` uses POINTER receivers for this reason — `Next` has to write the error where `Error` can read it.
 
+- **`Save` of a record that is not new always writes it, even when its document is gone.** The replace path upserts, because a journal stamped by an insert that was rolled back looks the same as a saved record, and a transaction the driver retries saves it again (BUG-188). The cost is that saving a record another writer hard-deleted recreates it. Do not remove the upsert to stop that; the caller needs a transaction, which turns the race into a write conflict and a retry.
 - **`Delete` is a *virtual* delete; `HardDelete` is physical.** `Delete` marks the object deleted and re-saves it (the row stays in the database); only `HardDelete` issues a real `DeleteMany`. Don't assume `Delete` removes data.
 
 - **`Session.Close` is intentionally a no-op.** Connections are owned by the long-lived `*mongo.Client` pool, not the session. Per-request cleanup happens by cancelling the `context.Context` passed to `Server.Session`, not by calling `Close`. The method exists only to satisfy the interface.

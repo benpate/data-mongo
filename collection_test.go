@@ -12,8 +12,10 @@ import (
 	"github.com/benpate/exp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 // Compile-time proof that Collection satisfies the data.Collection interface.
@@ -95,6 +97,46 @@ func TestCollection_Save_Update(t *testing.T) {
 	err = collection.Load(exp.Equal("name", "John Connor"), &loaded)
 	require.NoError(t, err)
 	assert.Equal(t, 21, loaded.Age)
+}
+
+// TestCollection_Save_MissingDocumentIsWritten confirms that saving an object that is not new, but
+// whose document is not in the collection, writes it instead of doing nothing.
+func TestCollection_Save_MissingDocumentIsWritten(t *testing.T) {
+
+	collection := getTestCollection(t)
+	person := newTestPerson("Sarah Connor", 29)
+
+	// A stamped journal with no document behind it: what a rolled-back insert leaves in memory
+	person.SetCreated("insert that never landed")
+	require.False(t, person.IsNew())
+
+	require.NoError(t, collection.Save(person, "second attempt"))
+
+	loaded := testPerson{}
+	require.NoError(t, collection.Load(exp.Equal("_id", person.PersonID), &loaded))
+	assert.Equal(t, "Sarah Connor", loaded.Name)
+}
+
+// TestCollection_Save_MissingDocumentConflict confirms that when writing a missing document would
+// break a unique index, Save reports a (409) Conflict instead of silently writing nothing.
+func TestCollection_Save_MissingDocumentConflict(t *testing.T) {
+
+	collection := getTestCollection(t)
+
+	_, err := collection.Mongo().Indexes().CreateOne(context.Background(), mongo.IndexModel{
+		Keys:    bson.D{{Key: "name", Value: 1}},
+		Options: options.Index().SetUnique(true),
+	})
+	require.NoError(t, err)
+
+	seedPeople(t, collection, newTestPerson("T-800", 1))
+
+	// A different record, carrying the same unique name, whose own document is gone
+	impostor := newTestPerson("T-800", 2)
+	impostor.SetCreated("insert that never landed")
+
+	err = collection.Save(impostor, "second attempt")
+	require.True(t, derp.IsConflict(err))
 }
 
 // Saving a non-new object whose ID is not a valid Mongo ObjectID fails on the

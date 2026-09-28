@@ -7,6 +7,7 @@ import (
 	"github.com/benpate/data"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
@@ -124,6 +125,42 @@ func TestServer_WithTransaction_Commit(t *testing.T) {
 	err = server.Database().Collection("testPeople").FindOne(context.Background(), map[string]any{"_id": person.PersonID}).Decode(&loaded)
 	require.NoError(t, err)
 	assert.Equal(t, "Kyle Reese", loaded.Name)
+}
+
+// TestServer_WithTransaction_RetriedInsertIsKept confirms that a new record saved in a transaction
+// the driver retries is present after the retry commits (BUG-188).
+func TestServer_WithTransaction_RetriedInsertIsKept(t *testing.T) {
+
+	server := getTestServer(t)
+	person := newTestPerson("Kyle Reese", 30)
+	attempts := 0
+
+	transaction := func(session data.Session) (any, error) {
+
+		attempts++
+
+		if err := session.Collection("testPeople").Save(person, "in transaction"); err != nil {
+			return nil, err
+		}
+
+		// The first attempt fails the way a write conflict elsewhere in the transaction does,
+		// so the driver rolls it back and runs the callback again with the same person
+		if attempts == 1 {
+			return nil, mongo.CommandError{Code: 112, Name: "WriteConflict", Labels: []string{"TransientTransactionError"}}
+		}
+
+		return nil, nil
+	}
+
+	if _, err := server.WithTransaction(context.Background(), transaction); err != nil {
+		t.Skipf("MongoDB transaction not supported in this configuration: %v", err)
+	}
+
+	require.Equal(t, 2, attempts)
+
+	count, err := server.Database().Collection("testPeople").CountDocuments(context.Background(), map[string]any{"_id": person.PersonID})
+	require.NoError(t, err)
+	assert.Equal(t, int64(1), count)
 }
 
 // When the callback returns an error, the transaction rolls back and nothing

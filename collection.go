@@ -13,6 +13,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 // Collection wraps a mongodb.Collection with all of the methods required by the data.Collection interface
@@ -149,7 +150,9 @@ func (c Collection) Save(object data.Object, note string) error {
 
 	filter := bson.M{"_id": objectID}
 
-	if _, err := c.collection.ReplaceOne(c.context, filter, object); err != nil {
+	// RULE: Upsert, because a stamped journal does not prove the document exists.  A transaction
+	// the driver retries runs this again after its first insert was rolled back (BUG-188).
+	if _, err := c.collection.ReplaceOne(c.context, filter, object, options.Replace().SetUpsert(true)); err != nil {
 		return wrapWriteError(err, location, "Replacing object", filter, object.ID())
 	}
 
