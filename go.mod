@@ -8,7 +8,7 @@ require (
 	github.com/benpate/exp v0.12.0
 	github.com/stretchr/testify v1.12.1
 	go.mongodb.org/mongo-driver v1.17.10
-	go.mongodb.org/mongo-driver/v2 v2.9.2
+	go.mongodb.org/mongo-driver/v2 v2.9.3
 )
 
 require (
